@@ -17,3 +17,5 @@ Check if nest server simulation is running
 ```
 curl localhost:5000
 ```
+
+### License [MIT](LICENSE)
