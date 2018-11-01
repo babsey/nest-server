@@ -90,7 +90,7 @@ def simulate(data):
             params = collection.get('params', {})
             obj = nest.Create(model, n, serialize.collection(model, params))
             if collection['element_type'] == 'recorder':
-                records.append({'node': idx})
+                records.append({'recorder': {'idx': idx, 'model': model}})
         collections[idx]['obj'] = obj
         collections[idx]['global_ids'] = tuple(obj)
 
