@@ -127,8 +127,8 @@ def simulate(data):
     # print('Get records')
     ndigits = int(-1 * np.log10(resolution))
     for idx, record in enumerate(records):
-        recId = collections[record['node']]['obj']
-        events = serialize.events(recId, ndigits)
+        recorderObj = collections[record['recorder']['idx']]['obj']
+        events = serialize.events(recorderObj, ndigits)
         records[idx]['idx'] = idx
         records[idx]['events'] = events
         nest.SetStatus(recId, {'n_events': 0})
