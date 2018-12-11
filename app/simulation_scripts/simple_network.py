@@ -131,8 +131,9 @@ def simulate(data):
         events = serialize.events(recorderObj, ndigits)
         records[idx]['idx'] = idx
         records[idx]['events'] = events
-        nest.SetStatus(recId, {'n_events': 0})
     data['records'] = records
+
+    nest.ResetKernel()
 
     # print('Delete objects')
     for collection in collections:
