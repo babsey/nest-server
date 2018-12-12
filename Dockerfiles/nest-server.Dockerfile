@@ -30,8 +30,9 @@ RUN cmake -DCMAKE_INSTALL_PREFIX:PATH=/opt/nest/ -Dwith-python=3 /tmp/nest-simul
     make install && \
     rm -rf /tmp/*
 
-COPY ./app /nest-server
-WORKDIR /nest-server
+COPY ./app /opt/nest-server
+COPY .entrypoint.sh /opt/nest-server/
+WORKDIR /opt/nest-server
 
 EXPOSE 5000
 RUN chmod 755 entrypoint.sh

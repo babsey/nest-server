@@ -1,0 +1,60 @@
+Bootstrap: docker
+From: ubuntu:18.04
+
+%labels
+  AUTHOR <spreizer@web.de>
+
+%runscript
+  python3 /opt/nest-server/app/main.py --host 0.0.0.0
+
+%environment
+  # NEST is installed here. When you relocate NEST, change this variable.
+  export NEST_INSTALL_DIR=/opt/nest
+
+  # NEST finds standard *.sli files $NEST_DATA_DIR/sli
+  export NEST_DATA_DIR=$NEST_INSTALL_DIR/share/nest
+
+  # NEST finds help files $NEST_DOC_DIR/help
+  export NEST_DOC_DIR=$NEST_INSTALL_DIR/share/doc/nest
+
+  # The path where NEST looks for user modules.
+  export NEST_MODULE_PATH=$NEST_INSTALL_DIR/lib64/nest
+
+  # The path where the PyNEST bindings are installed.
+  export NEST_PYTHON_PREFIX=$NEST_INSTALL_DIR/lib/python3.6/site-packages
+  export PYTHONPATH=$NEST_PYTHON_PREFIX:$PYTHONPATH
+
+  # Make nest / sli /... executables visible.
+  export PATH=$NEST_INSTALL_DIR/bin:$PATH
+
+%post
+  apt update && apt install -y \
+  build-essential \
+  cmake \
+  cython3 \
+  git \
+  libgsl0-dev \
+  libltdl7-dev \
+  libncurses5-dev \
+  libreadline6-dev \
+  python3-all-dev \
+  python3-numpy \
+  python3-pip
+
+  pip3 install flask==0.12.4 flask-cors
+  git clone https://github.com/babsey/nest-server.git /opt/nest-server
+
+  git clone https://github.com/compneuronmbu/nest-simulator.git /tmp/nest-simulator
+  cd /tmp/nest-simulator
+  git fetch
+  git checkout nest-3
+  git checkout 4348e5
+
+  mkdir /tmp/nest-build
+  cd /tmp/nest-build
+  cmake -DCMAKE_INSTALL_PREFIX:PATH=/opt/nest -Dwith-python=3 /tmp/nest-simulator
+  make
+  make install
+
+  rm -rf /tmp/nest-simulator
+  rm -rf /tmp/nest-build
