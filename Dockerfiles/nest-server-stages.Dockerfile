@@ -1,5 +1,5 @@
-FROM ubuntu:18.04
-
+### STAGE 1: Build NEST ###
+FROM ubuntu:18.04 as nest-builder
 LABEL maintainer="Sebastian Spreizer <spreizer@web.de>"
 
 RUN apt-get update && apt-get install -y \
@@ -11,10 +11,8 @@ RUN apt-get update && apt-get install -y \
     libncurses5-dev \
     libreadline6-dev \
     python3-all-dev \
-    python3-pip \
     python3-numpy \
-    wget && \
-    pip3 install flask==0.12.4 flask-cors
+    wget
 
 WORKDIR /tmp
 RUN wget https://github.com/nest/nest-simulator/archive/v2.16.0.tar.gz && \
@@ -24,12 +22,25 @@ RUN wget https://github.com/nest/nest-simulator/archive/v2.16.0.tar.gz && \
 WORKDIR /tmp/nest-build
 RUN cmake -DCMAKE_INSTALL_PREFIX:PATH=/opt/nest/ -Dwith-python=3 /tmp/nest-simulator-2.16.0 && \
     make && \
-    make install && \
-    rm -rf /tmp/*
+    make install
+
+
+### STAGE 2: Setup ###
+FROM ubuntu:18.04
+LABEL maintainer="Sebastian Spreizer <spreizer@web.de>"
+
+RUN apt-get update && apt-get install -y \
+    libgsl0-dev \
+    libltdl7-dev \
+    python3-numpy \
+    python3-pip && \
+    pip3 install flask==0.12.4 flask-cors
+
+COPY --from=nest-builder /opt/nest /opt/nest
 
 COPY . /opt/nest-server
 WORKDIR /opt/nest-server
+EXPOSE 80 5000
 
-EXPOSE 5000
 RUN chmod 755 entrypoint.sh
 ENTRYPOINT ["bash entrypoint.sh /opt/nest"]

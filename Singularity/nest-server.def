@@ -3,6 +3,7 @@ From: ubuntu:18.04
 
 %labels
   AUTHOR <spreizer@web.de>
+  VERSION 1.0.0
 
 %runscript
   python3 /opt/nest-server/app/main.py --host 0.0.0.0
@@ -27,34 +28,34 @@ From: ubuntu:18.04
   # Make nest / sli /... executables visible.
   export PATH=$NEST_INSTALL_DIR/bin:$PATH
 
+%files
+  . /opt/nest-server
+
 %post
-  apt update && apt install -y \
-  build-essential \
-  cmake \
-  cython3 \
-  git \
-  libgsl0-dev \
-  libltdl7-dev \
-  libncurses5-dev \
-  libreadline6-dev \
-  python3-all-dev \
-  python3-numpy \
-  python3-pip
+  apt-get update && apt-get install -y \
+    build-essential \
+    cmake \
+    cython3 \
+    libgsl0-dev \
+    libltdl7-dev \
+    libncurses5-dev \
+    libreadline6-dev \
+    python3-all-dev \
+    python3-numpy \
+    python3-pip \
+    wget
 
   pip3 install flask==0.12.4 flask-cors
-  git clone https://github.com/babsey/nest-server.git /opt/nest-server
 
-  git clone https://github.com/compneuronmbu/nest-simulator.git /tmp/nest-simulator
-  cd /tmp/nest-simulator
-  git fetch
-  git checkout nest-3
-  git checkout 4348e5
+  rm -rf /tmp/*
+  cd /tmp/
+  wget https://github.com/nest/nest-simulator/archive/v2.16.0.tar.gz
+  tar zxf v2.16.0.tar.gz
 
   mkdir /tmp/nest-build
   cd /tmp/nest-build
-  cmake -DCMAKE_INSTALL_PREFIX:PATH=/opt/nest -Dwith-python=3 /tmp/nest-simulator
+  cmake -DCMAKE_INSTALL_PREFIX:PATH=/opt/nest -Dwith-python=3 /tmp/nest-simulator-2.16.0
   make
   make install
 
-  rm -rf /tmp/nest-simulator
-  rm -rf /tmp/nest-build
+  rm -rf /tmp/*

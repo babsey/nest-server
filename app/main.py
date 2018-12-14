@@ -19,6 +19,8 @@ except Exception: #ImportError
     from rest_api.client import api_client
     from simulation_scripts import simple_network as sim_client
 
+VERSION = "1.0.0"
+
 app = Flask(__name__)
 CORS(app)
 
@@ -39,9 +41,12 @@ topo_calls.sort()
 def index():
     response = {
         'name': 'NEST server',
-        'version': nest.version().split(' ')[1],
+        'nest': {
+            'env': dict(filter(lambda item: 'NEST' in item[0], os.environ.items())),
+            'version': nest.version().split(' ')[1],
+        },
         'ref': 'http://www.github.com/babsey/nest-server',
-        'env': dict(filter(lambda item: 'NEST' in item[0], os.environ.items()))
+        'version': VERSION
     }
     return jsonify(response)
 

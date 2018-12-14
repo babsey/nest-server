@@ -6,6 +6,7 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     cmake \
     cython3 \
+    git \
     libgsl0-dev \
     libltdl7-dev \
     libncurses5-dev \
@@ -18,8 +19,8 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /tmp
 RUN wget https://github.com/nest/nest-simulator/archive/v2.16.0.tar.gz && \
-    tar zxf v2.16.0.tar.gz && \
-    mkdir /tmp/nest-build
+  tar zxf v2.16.0.tar.gz && \
+  mkdir /tmp/nest-build
 
 WORKDIR /tmp/nest-build
 RUN cmake -DCMAKE_INSTALL_PREFIX:PATH=/opt/nest/ -Dwith-python=3 /tmp/nest-simulator-2.16.0 && \
@@ -27,7 +28,7 @@ RUN cmake -DCMAKE_INSTALL_PREFIX:PATH=/opt/nest/ -Dwith-python=3 /tmp/nest-simul
     make install && \
     rm -rf /tmp/*
 
-COPY . /opt/nest-server
+RUN git clone https://github.com/babsey/nest-server.git /opt/nest-server
 WORKDIR /opt/nest-server
 
 EXPOSE 5000
