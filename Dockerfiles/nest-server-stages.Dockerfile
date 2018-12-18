@@ -37,10 +37,9 @@ RUN apt-get update && apt-get install -y \
     pip3 install flask==0.12.4 flask-cors
 
 COPY --from=nest-builder /opt/nest /opt/nest
+COPY ./app /opt/nest-server
+EXPOSE 5000
 
-COPY . /opt/nest-server
-WORKDIR /opt/nest-server
-EXPOSE 80 5000
-
-RUN chmod 755 entrypoint.sh
-ENTRYPOINT ["bash entrypoint.sh /opt/nest"]
+COPY entrypoint.sh /usr/local/bin/docker-entrypoint
+RUN chmod +x /usr/local/bin/docker-entrypoint
+ENTRYPOINT ["docker-entrypoint"]

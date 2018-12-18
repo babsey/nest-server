@@ -41,15 +41,15 @@ Build a docker image
 docker build -f Dockerfiles/nest-server.Dockerfile -t nest-server .
 ```
 ###### Step 1 (alternative)
- Load image from a file (nest-server-x.x.x.dimg)
+ Load image from a file (nest-server-X.Y.dimg)
 ```
-sudo docker load --input nest-server-x.x.x.dimg
+sudo docker load --input nest-server-X.Y.dimg
 ```
 
 ###### Step 2
 Start docker container with daemon
 ```
-docker run -d -p 5000:5000 -t nest-server
+docker run -d -p 5000:5000 -t nest-server:X.Y
 ```
 NEST Server is running on port 5000.
 
@@ -74,7 +74,7 @@ Install singularity 2.6 from source code (See [instructions](https://www.sylabs.
 ###### Step 2
 Build a singularity image of nest server (with sudo)
 ```
-sudo singularity build nest-server.simg Singularity/nest-server.def
+sudo singularity build nest-server-vX.Y.simg Singularity/nest-server.def
 ```
 The image contains NEST 3, python flask (0.12.4) and nest server.
 

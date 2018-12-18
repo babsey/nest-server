@@ -27,9 +27,10 @@ RUN cmake -DCMAKE_INSTALL_PREFIX:PATH=/opt/nest/ -Dwith-python=3 /tmp/nest-simul
     make install && \
     rm -rf /tmp/*
 
-COPY . /opt/nest-server
+COPY ./app /opt/nest-server
 WORKDIR /opt/nest-server
-
 EXPOSE 5000
-RUN chmod 755 entrypoint.sh
-ENTRYPOINT ["bash entrypoint.sh /opt/nest"]
+
+COPY entrypoint.sh /usr/local/bin/docker-entrypoint
+RUN chmod +x /usr/local/bin/docker-entrypoint
+ENTRYPOINT ["docker-entrypoint"]
