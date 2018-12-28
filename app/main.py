@@ -19,7 +19,7 @@ except Exception: #ImportError
     from rest_api.client import api_client
     from simulation_scripts import simple_network as sim_client
 
-VERSION = "1.0.1"
+VERSION = "1.0.2"
 
 app = Flask(__name__)
 CORS(app)

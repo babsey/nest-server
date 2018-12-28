@@ -42,4 +42,4 @@ EXPOSE 5000
 
 COPY entrypoint.sh /usr/local/bin/docker-entrypoint
 RUN chmod +x /usr/local/bin/docker-entrypoint
-ENTRYPOINT ["docker-entrypoint"]
+ENTRYPOINT ["docker-entrypoint", "/opt/nest"]

@@ -31,6 +31,6 @@ COPY ./app /opt/nest-server
 WORKDIR /opt/nest-server
 EXPOSE 5000
 
-COPY entrypoint.sh /usr/local/bin/docker-entrypoint
-RUN chmod +x /usr/local/bin/docker-entrypoint
-ENTRYPOINT ["docker-entrypoint"]
+COPY entrypoint.sh /usr/local/bin/nest-server
+RUN chmod +x /usr/local/bin/nest-server
+ENTRYPOINT ["nest-server", "/opt/nest"]
