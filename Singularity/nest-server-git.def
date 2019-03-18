@@ -3,9 +3,10 @@ From: ubuntu:18.04
 
 %labels
   AUTHOR <spreizer@web.de>
+  VERSION 1.2
 
 %runscript
-  python3 /opt/nest-server/app/main.py --host 0.0.0.0
+  python3 /opt/nest-server/app/main.py $@
 
 %environment
   # NEST is installed here. When you relocate NEST, change this variable.
@@ -44,6 +45,7 @@ From: ubuntu:18.04
 
   pip3 install flask==0.12.4 flask-cors
   git clone https://github.com/babsey/nest-server.git /opt/nest-server
+  git checkout v1.0
 
   rm -rf /tmp/*
   cd /tmp/

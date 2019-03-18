@@ -3,6 +3,7 @@
 import numpy as np
 import nest
 import nest.topology as tp
+import datetime
 
 from . import serialize
 
@@ -20,12 +21,16 @@ def _getNodes(collection, connectome):
         nodes = collection['obj']
     return nodes
 
+def log(data, message):
+    data['logs'].append((str(datetime.datetime.now()), 'server', message))
+
 
 def simulate(data):
-    print('Simulate %s (%s)' % (data.get('name', None), data['_id']))
+    print('Build %s (%s)' % (data.get('name', None), data['_id']))
     # print(data)
 
-    # print('Get request')
+    data['logs'] = []
+    log(data, 'Get request')
     simulation = data.get('simulation', {'time': 1000.0})
     kernel = data.get('kernel', {'time': 0.0})
     models = data.get('models', [])
@@ -33,8 +38,9 @@ def simulate(data):
     connectomes = data.get('connectomes', [])
     records = []
 
-    # print('Set kernel')
+    log(data, 'Reset kernel')
     nest.ResetKernel()
+
     np.random.seed(int(simulation.get('random_seed', 0)))
     local_num_threads = int(kernel.get('local_num_threads', 1))
     rng_seeds = np.random.randint(0, 1000, local_num_threads).tolist()
@@ -44,27 +50,27 @@ def simulate(data):
         'resolution': resolution,
         'rng_seeds': rng_seeds,
     }
+    log(data, 'Set kernel status')
     nest.SetKernelStatus(kernel_dict)
     data['kernel'] = kernel_dict
 
-    # print('Copy models')
+    log(data, 'Copy model')
     for model in models:
         nest.CopyModel(**model)
 
-    # print('Set all recordables of the source neuron for the multimeter')
+    log(data, 'Set all recordables for multimeter')
     for idx, collection in enumerate(collections):
         if collection['element_type'] != 'recorder':
             continue
         if collection['model'] != 'multimeter':
             continue
-        recs = filter(
-            lambda rec_conn: rec_conn['target'] == idx, connections)
+        recs = list(filter(lambda conn: conn['post'] == idx, connectomes))
         if len(recs) == 0:
             continue
 
         models = []
         for conn in recs:
-            model = collections[recs[0]['source']]['model']
+            model = collections[conn['pre']]['model']
             models.append(model)
         models_unique = list(set(models))
         assert len(models_unique) == 1
@@ -76,7 +82,7 @@ def simulate(data):
             collection['params'] = {'record_from': recordables}
         collections[idx] = collection
 
-    # print('Create collections')
+    log(data, 'Create collections')
     for idx, collection in enumerate(collections):
         assert idx == collection['idx']
         if collection.get('disabled', False):
@@ -94,7 +100,7 @@ def simulate(data):
         collections[idx]['obj'] = obj
         collections[idx]['global_ids'] = tuple(obj)
 
-    # print('Connect collection')
+    log(data, 'Connect collections')
     for connectome in connectomes:
         pre_idx = connectome['pre']
         post_idx = connectome['post']
@@ -120,11 +126,13 @@ def simulate(data):
             nest.Connect(pre_nodes, post_nodes,
                          serialize.conn(conn_spec), serialize.syn(syn_spec))
 
-    # print('Simulate')
+    print('Simulate %s (%s)' % (data.get('name', None), data['_id']))
+    log(data, 'Start simulation')
     nest.Simulate(float(simulation['time']))
+    log(data, 'End simulation')
     data['kernel']['time'] = nest.GetKernelStatus('time')
 
-    # print('Get records')
+    log(data, 'Serialize recording data')
     ndigits = int(-1 * np.log10(resolution))
     for idx, record in enumerate(records):
         recorderObj = collections[record['recorder']['idx']]['obj']
@@ -133,10 +141,14 @@ def simulate(data):
         records[idx]['events'] = events
     data['records'] = records
 
+    log(data, 'Reset kernel')
     nest.ResetKernel()
 
-    # print('Delete objects')
+    log(data, 'Serialize collections')
     for collection in collections:
         del collection['obj']
+        if 'record_from' in collection['params']:
+            recordables = collection['params']['record_from']
+            collection['params']['record_from'] = list(map(str, recordables))
 
     return data

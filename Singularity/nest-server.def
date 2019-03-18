@@ -3,10 +3,10 @@ From: ubuntu:18.04
 
 %labels
   AUTHOR <spreizer@web.de>
-  VERSION 1.0.0
+  VERSION 1.2
 
 %runscript
-  python3 /opt/nest-server/app/main.py --host 0.0.0.0
+  python3 /opt/nest-server/main.py $@
 
 %environment
   # NEST is installed here. When you relocate NEST, change this variable.
@@ -29,7 +29,7 @@ From: ubuntu:18.04
   export PATH=$NEST_INSTALL_DIR/bin:$PATH
 
 %files
-  . /opt/nest-server
+  ./app /opt/nest-server
 
 %post
   apt-get update && apt-get install -y \

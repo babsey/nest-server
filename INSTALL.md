@@ -23,11 +23,11 @@ sudo pip3 install flask==0.12.4 flask-cors
 ###### Step 3
 Start nest server.
 ```
-python3 app/main.py --host 0.0.0.0
+python3 app/main.py (--host 0.0.0.0)
 ```
 
 ###### Step 4
-Check if nest server is running.
+Check if nest server is running on port 5000.
 ```
 curl localhost:5000
 ```
@@ -41,9 +41,9 @@ Build a docker image
 docker build -f Dockerfiles/nest-server.Dockerfile -t nest-server .
 ```
 ###### Step 1 (alternative)
- Load image from a file (nest-server-X.Y.dimg)
+ Load image from a file (nest-server-vX.Y.dimg)
 ```
-sudo docker load --input nest-server-X.Y.dimg
+sudo docker load --input nest-server-vX.Y.dimg
 ```
 
 ###### Step 2
@@ -81,7 +81,12 @@ The image contains NEST 3, python flask (0.12.4) and nest server.
 ###### Step 3
 Run singularity container from nest-server image (without sudo).
 ```
-singularity run nest-server.simg
+singularity run nest-server-vX.Y.simg
+```
+or
+
+```
+singularity exec nest-server-vX.Y.simg python3 /opt/nest-server/main.py
 ```
 NEST Server is running on port 5000.
 

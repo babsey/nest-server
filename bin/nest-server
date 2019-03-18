@@ -1,0 +1,51 @@
+#!/bin/bash
+
+export NESTSERVER_VERSION=1.2
+export NESTSERVER_PATH=/opt/nest-server/
+
+pid() {
+  pgrep -f 'python3 /opt/nest-server/main.py'
+}
+
+status() {
+  export pid=`nest-server pid`
+  if [ $pid ]; then
+    echo 'NEST Server is running.'
+  else
+    echo 'NEST Server is not running.'
+  fi
+}
+
+start() {
+  export pid=`nest-server pid`
+  if [ $pid ]; then
+    echo 'NEST Server is already running.'
+  else
+    singularity exec ${NESTSERVER_PATH}/nest-server-v${NESTSERVER_VERSION}.simg python3 /opt/nest-server/main.py &
+    echo 'NEST Server is started.'
+  fi
+}
+
+stop() {
+  export pid=`nest-server pid`
+  if [ $pid ]; then
+    kill $pid
+    echo 'NEST Server is stopped.'
+  fi
+}
+
+version() {
+  echo v${NESTSERVER_VERSION}
+}
+
+case "$1" in
+  pid) pid ;;
+  status)  status ;;
+  start)   start ;;
+  stop)    stop ;;
+  restart) stop; start ;;
+  version) version ;;
+  *) echo "usage: $0 pid|status|start|stop|restart|version" >&2
+     exit 1
+     ;;
+esac

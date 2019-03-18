@@ -1,7 +1,11 @@
 #!/usr/bin/env python
 
+VERSION = "1.2.0"
+print('\n\t-- N E S T  Server --\n Version: v%s\n' %(VERSION))
+
 import os
 import optparse
+import datetime
 
 import flask
 from flask import Flask, request, jsonify
@@ -18,8 +22,6 @@ except Exception: #ImportError
     from rest_api import initializer as api_init
     from rest_api.client import api_client
     from simulation_scripts import simple_network as sim_client
-
-VERSION = "1.0.2"
 
 app = Flask(__name__)
 CORS(app)
@@ -108,19 +110,26 @@ def router_topo_call(call):
 # NEST simulation request
 # --------------------------
 
-def simulate(simulation, data):
+def simulate(data):
     try:
-        response = {'data': simulation(data)}
+        data = sim_client.simulate(data)
+        response = {'data': data}
     except Exception as e:
         response = {'error': str(e)}
-    return jsonify(response)
-
+        for log in data['logs']:
+            print('{0}: {2}'.format(*log))
+    try:
+        if 'data' in response:
+            response['data']['logs'].append((str(datetime.datetime.now()), 'server', 'Jsonify response'))
+        return jsonify(response)
+    except Exception as e:
+        return ''
 
 @app.route('/simulate', methods=['POST', 'OPTIONS'])
 @cross_origin()
 def network_simulate():
     # return simulate(sim.run, request.get_json())
-    return simulate(sim_client.simulate, request.get_json())
+    return simulate(request.get_json())
 
 
 # @app.route('/network/resume', methods=['POST'])
