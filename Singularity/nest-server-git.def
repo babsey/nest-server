@@ -2,8 +2,8 @@ Bootstrap: docker
 From: ubuntu:18.04
 
 %labels
-  AUTHOR <spreizer@web.de>
-  VERSION 1.2
+  AUTHOR  Sebastian Spreizer <spreizer@web.de>
+  VERSION 1.3.0
 
 %runscript
   python3 /opt/nest-server/app/main.py $@

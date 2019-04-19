@@ -38,7 +38,7 @@ curl localhost:5000
 ###### Step 1
 Build a docker image
 ```
-docker build -f Dockerfiles/nest-server.Dockerfile -t nest-server .
+docker build -f Dockerfiles/nest-server.Dockerfile -t nest-server:X.Y .
 ```
 ###### Step 1 (alternative)
  Load image from a file (nest-server-vX.Y.dimg)

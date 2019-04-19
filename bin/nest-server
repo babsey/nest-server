@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export NESTSERVER_VERSION=1.2
+export NESTSERVER_VERSION=1.3.0
 export NESTSERVER_PATH=/opt/nest-server/
 
 pid() {

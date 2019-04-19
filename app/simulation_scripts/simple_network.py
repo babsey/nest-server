@@ -8,32 +8,27 @@ import datetime
 from . import serialize
 
 
-def _getNodes(collection, connectome):
-    if collection['element_type'] == 'structure':
-        if 'mask' in connectome:
-            mask_type, spec = connectome['mask'].item()
-            mask_obj = tp.CreateMask(mask_type, spec)
-            anchor = conn.get('anchor', [0.] * collection['ndim'])
-            nodes = tp.SelectNodesByMask(collection, anchor, mask_obj)
-        else:
-            nodes = collection['obj'].get('nodes')
+def _nodes(collection):
+    if 'topology' in collection:
+        nodes = nest.GetNodes(collection['obj'])[0]
     else:
         nodes = collection['obj']
     return nodes
+
 
 def log(data, message):
     data['logs'].append((str(datetime.datetime.now()), 'server', message))
 
 
 def simulate(data):
-    print('Build %s (%s)' % (data.get('name', None), data['_id']))
+    data['logs'] = []
+    print('Simulate %s (%s)' % (data.get('name', None), data['_id']))
     # print(data)
 
-    data['logs'] = []
     log(data, 'Get request')
     simulation = data.get('simulation', {'time': 1000.0})
     kernel = data.get('kernel', {'time': 0.0})
-    models = data.get('models', [])
+    models = data['models']
     collections = data['collections']
     connectomes = data.get('connectomes', [])
     records = []
@@ -41,6 +36,7 @@ def simulate(data):
     log(data, 'Reset kernel')
     nest.ResetKernel()
 
+    log(data, 'Set kernel status')
     np.random.seed(int(simulation.get('random_seed', 0)))
     local_num_threads = int(kernel.get('local_num_threads', 1))
     rng_seeds = np.random.randint(0, 1000, local_num_threads).tolist()
@@ -50,83 +46,75 @@ def simulate(data):
         'resolution': resolution,
         'rng_seeds': rng_seeds,
     }
-    log(data, 'Set kernel status')
     nest.SetKernelStatus(kernel_dict)
     data['kernel'] = kernel_dict
 
-    log(data, 'Copy model')
-    for model in models:
-        nest.CopyModel(**model)
-
-    log(data, 'Set all recordables for multimeter')
+    log(data, 'Collect all recordables for multimeter')
     for idx, collection in enumerate(collections):
-        if collection['element_type'] != 'recorder':
+        model = models[collection['model']]
+        if collection['element_type'] != 'recorder' or model['existing'] != 'multimeter':
             continue
-        if collection['model'] != 'multimeter':
-            continue
-        recs = list(filter(lambda conn: conn['post'] == idx, connectomes))
+
+        recs = list(filter(lambda conn: conn['pre'] == idx, connectomes))
         if len(recs) == 0:
             continue
 
-        models = []
+        recordable_models = []
         for conn in recs:
-            model = collections[conn['pre']]['model']
-            models.append(model)
-        models_unique = list(set(models))
-        assert len(models_unique) == 1
+            recordable_model = collections[conn['post']]['model']
+            recordable_models.append(recordable_model)
+        recordable_models_set = list(set(recordable_models))
+        assert len(recordable_models_set) == 1
 
-        recordables = nest.GetDefaults(models_unique[0], 'recordables')
-        if 'params' in collection:
-            collection['params']['record_from'] = recordables
-        else:
-            collection['params'] = {'record_from': recordables}
-        collections[idx] = collection
+        recordables = nest.GetDefaults(recordable_models_set[0], 'recordables')
+        model['params']['record_from'] = list(map(str, recordables))
+
+    log(data, 'Copy models')
+    for new, model in models.items():
+        params_serialized = serialize.parameter(
+            model['existing'], model['params'])
+        nest.CopyModel(model['existing'], new, params_serialized)
 
     log(data, 'Create collections')
     for idx, collection in enumerate(collections):
         assert idx == collection['idx']
-        if collection.get('disabled', False):
-            continue
-        if collection['element_type'] == 'structure':
-            obj = tp.CreateLayer(collection['specs'])
-            collections[idx]['ndim'] = len(collection['specs']['positions'][0])
+        if 'topology' in collection:
+            specs = collection['topology']
+            specs['elements'] = collection['model']
+            obj = tp.CreateLayer(serialize.layer(specs))
+            if len(specs['positions']) > 0:
+                positions = specs['positions']
+            else:
+                positions = tp.GetPosition(nest.GetNodes(obj)[0])
+                positions = np.round(positions, decimals=3).astype(float).tolist()
+                collections[idx]['topology']['positions'] = positions
+            collections[idx]['n'] = len(positions)
+            collections[idx]['ndim'] = len(positions[0])
+            collections[idx]['global_ids'] = nest.GetNodes(obj)[0]
+            collections[idx]['obj'] = obj
         else:
-            model = collection['model']
             n = int(collection.get('n', 1))
-            params = collection.get('params', {})
-            obj = nest.Create(model, n, serialize.collection(model, params))
+            obj = nest.Create(collection['model'], n)
             if collection['element_type'] == 'recorder':
-                records.append({'recorder': {'idx': idx, 'model': model}})
-        collections[idx]['obj'] = obj
-        collections[idx]['global_ids'] = tuple(obj)
+                model = models[collection['model']]
+                records.append(
+                    {'recorder': {'idx': idx, 'model': model['existing']}})
+            collections[idx]['global_ids'] = list(obj)
+            collections[idx]['obj'] = obj
+
 
     log(data, 'Connect collections')
     for connectome in connectomes:
-        pre_idx = connectome['pre']
-        post_idx = connectome['post']
-        pre_element_type = collections[pre_idx]['element_type']
-        post_element_type = collections[post_idx]['element_type']
-        if pre_element_type == 'structure' and post_element_type == 'structure':
-            pre_layer = collections[pre_idx]['obj']
-            post_layer = collections[post_idx]['obj']
+        pre = collections[connectome['pre']]
+        post = collections[connectome['post']]
+        if ('topology' in pre) and ('topology' in post):
             projections = connectome['projections']
-            tp.ConnectLayers(pre_layer, post_layer, projections)
+            tp.ConnectLayers(pre['obj'], post['obj'], serialize.projections(projections))
         else:
-            pre_nodes = _getNodes(collections[pre_idx], connectome)
-            post_nodes = _getNodes(collections[post_idx], connectome)
             conn_spec = connectome.get('conn_spec', 'all_to_all')
             syn_spec = connectome.get('syn_spec', 'static_synapse')
-            if collections[post_idx]['model'] in ['multimeter', 'voltmeter']:
-                pre_nodes, post_nodes = post_nodes, pre_nodes
-                if type(conn_spec) == dict:
-                    if conn_spec['rule'] == 'fixed_indegree':
-                        conn_spec['rule'] = 'fixed_outdegree'
-                        conn_spec['outdegree'] = conn_spec['indegree']
-                        del conn_spec['indegree']
-            nest.Connect(pre_nodes, post_nodes,
-                         serialize.conn(conn_spec), serialize.syn(syn_spec))
+            nest.Connect(_nodes(pre), _nodes(post), serialize.conn(conn_spec), serialize.syn(syn_spec))
 
-    print('Simulate %s (%s)' % (data.get('name', None), data['_id']))
     log(data, 'Start simulation')
     nest.Simulate(float(simulation['time']))
     log(data, 'End simulation')
@@ -144,11 +132,8 @@ def simulate(data):
     log(data, 'Reset kernel')
     nest.ResetKernel()
 
-    log(data, 'Serialize collections')
+    log(data, 'Delete objects')
     for collection in collections:
         del collection['obj']
-        if 'record_from' in collection['params']:
-            recordables = collection['params']['record_from']
-            collection['params']['record_from'] = list(map(str, recordables))
 
     return data

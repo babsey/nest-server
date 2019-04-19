@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-VERSION = "1.2.0"
+VERSION = "1.3.0"
 print('\n\t-- N E S T  Server --\n Version: v%s\n' %(VERSION))
 
 import os
