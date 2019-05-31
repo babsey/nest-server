@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-VERSION = "1.3.0"
+VERSION = "1.4.0"
 print('\n\t-- N E S T  Server --\n Version: v%s\n' %(VERSION))
 
 import os
@@ -42,16 +42,17 @@ topo_calls.sort()
 @app.route('/', methods=['GET'])
 def index():
     response = {
-        'name': 'NEST server',
-        'version': VERSION,
-        'nest': {
-            'env': dict(filter(lambda item: 'NEST' in item[0], os.environ.items())),
+        'server': {
+            'version': VERSION,
+            'git': {
+                'ref': 'http://www.github.com/babsey/nest-server',
+                'tag': 'v' + '.'.join(VERSION.split('.')[:-1])
+            }
+        },
+        'simulator': {
+            'env': dict(filter(lambda item: 'NEST_' in item[0], os.environ.items())),
             'version': nest.version().split(' ')[1],
         },
-        'git': {
-            'ref': 'http://www.github.com/babsey/nest-server',
-            'tag': 'v' + '.'.join(VERSION.split('.')[:-1])
-        }
     }
     return jsonify(response)
 

@@ -55,14 +55,18 @@ def simulate(data):
         if collection['element_type'] != 'recorder' or model['existing'] != 'multimeter':
             continue
 
+        print(model['params'])
+        if 'record_from' in model['params']:
+            continue
+
         recs = list(filter(lambda conn: conn['pre'] == idx, connectomes))
         if len(recs) == 0:
             continue
 
         recordable_models = []
         for conn in recs:
-            recordable_model = collections[conn['post']]['model']
-            recordable_models.append(recordable_model)
+            recordable_model = models[collections[conn['post']]['model']]
+            recordable_models.append(recordable_model['existing'])
         recordable_models_set = list(set(recordable_models))
         assert len(recordable_models_set) == 1
 
@@ -97,8 +101,12 @@ def simulate(data):
             obj = nest.Create(collection['model'], n)
             if collection['element_type'] == 'recorder':
                 model = models[collection['model']]
-                records.append(
-                    {'recorder': {'idx': idx, 'model': model['existing']}})
+                record = {
+                    'recorder': {'idx': idx, 'model': model['existing']}
+                }
+                if 'record_from' in model['params']:
+                    record['record_from'] = model['params']['record_from']
+                records.append(record)
             collections[idx]['global_ids'] = list(obj)
             collections[idx]['obj'] = obj
 
