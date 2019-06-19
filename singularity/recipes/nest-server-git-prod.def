@@ -1,0 +1,59 @@
+Bootstrap: docker
+From: ubuntu:18.04
+
+%labels
+  AUTHOR Sebastian Spreizer <spreizer@web.de>
+  VERSION 1.5.0
+
+%post
+  apt-get update && apt-get install -y \
+    build-essential \
+    cmake \
+    cython3 \
+    git \
+    libgsl-dev \
+    libltdl-dev \
+    libncurses5-dev \
+    libreadline-dev \
+    python3-all-dev \
+    python3-numpy \
+    python3-pip \
+    wget
+
+  pip3 install uwsgi flask flask-cors
+  
+  git clone https://github.com/babsey/nest-server.git /opt/nest-server
+  git checkout v1.5
+
+  cd /tmp/
+  wget https://github.com/nest/nest-simulator/archive/v2.16.0.tar.gz
+  tar zxf v2.16.0.tar.gz
+
+  rm -rf /tmp/nest-build; mkdir /tmp/nest-build; cd /tmp/nest-build
+  cmake -DCMAKE_INSTALL_PREFIX:PATH=/opt/nest-simulator -Dwith-python=3 /tmp/nest-simulator-2.16.0
+  make; make install
+
+  rm -rf /tmp/nest-build /tmp/nest-simulator-2.16.0
+
+%environment
+  # NEST is installed here. When you relocate NEST, change this variable.
+  export NEST_INSTALL_DIR=/opt/nest-simulator
+
+  # NEST finds standard *.sli files $NEST_DATA_DIR/sli
+  export NEST_DATA_DIR=$NEST_INSTALL_DIR/share/nest
+
+  # NEST finds help files $NEST_DOC_DIR/help
+  export NEST_DOC_DIR=$NEST_INSTALL_DIR/share/doc/nest
+
+  # The path where NEST looks for user modules.
+  export NEST_MODULE_PATH=$NEST_INSTALL_DIR/lib64/nest
+
+  # The path where the PyNEST bindings are installed.
+  export NEST_PYTHON_PREFIX=$NEST_INSTALL_DIR/lib/python3.6/site-packages
+  export PYTHONPATH=$NEST_PYTHON_PREFIX:$PYTHONPATH
+
+  # Make nest / sli /... executables visible.
+  export PATH=$NEST_INSTALL_DIR/bin:$PATH
+
+%runscript
+  uwsgi --http-socket :5000 :module opt.nest-server.app.main:app

@@ -20,7 +20,8 @@ def log(data, message):
     data['logs'].append((str(datetime.datetime.now()), 'server', message))
 
 
-def simulate(data):
+def simulate(request):
+    data = request.get_json()
     data['logs'] = []
     print('Simulate %s (%s)' % (data.get('name', None), data['_id']))
     # print(data)

@@ -16,7 +16,7 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /tmp
 RUN wget https://github.com/nest/nest-simulator/archive/v2.16.0.tar.gz && \
-    tar zxf v2.16.0.tar.gz && \
+    tar -zxf v2.16.0.tar.gz && \
     mkdir /tmp/nest-build
 
 WORKDIR /tmp/nest-build
@@ -34,12 +34,12 @@ RUN apt-get update && apt-get install -y \
     libltdl7-dev \
     python3-numpy \
     python3-pip && \
-    pip3 install flask==0.12.4 flask-cors
+    pip3 install uwsgi flask flask-cors
 
 COPY --from=nest-builder /opt/nest-simulator /opt/nest-simulator
 COPY ./app /opt/nest-server/app
 EXPOSE 5000
 
-COPY entrypoint.sh /usr/local/bin/nest-server
+COPY ./docker/entrypoint.sh /usr/local/bin/nest-server
 RUN chmod +x /usr/local/bin/nest-server
 ENTRYPOINT "nest-server"

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-VERSION = "1.4.0"
-print('\n\t-- N E S T  Server --\n Version: v%s\n' %(VERSION))
+VERSION = "1.5.0"
+print('\n\t-- N E S T  Server --\n Version: v%s\n' % (VERSION))
 
 import os
 import optparse
@@ -14,14 +14,9 @@ from flask_cors import CORS, cross_origin
 import nest
 import nest.topology as topo
 
-try:
-    from .rest_api import initializer as api_init
-    from .rest_api.client import api_client
-    from .simulation_scripts import simple_network as sim_client
-except Exception: #ImportError
-    from rest_api import initializer as api_init
-    from rest_api.client import api_client
-    from simulation_scripts import simple_network as sim_client
+from .api import initializer as api_init
+from .api.client import api_client
+from . import scripts
 
 app = Flask(__name__)
 CORS(app)
@@ -56,6 +51,7 @@ def index():
     }
     return jsonify(response)
 
+
 # --------------------------
 # RESTful API
 # --------------------------
@@ -66,6 +62,7 @@ def router_nest():
     data, args, kwargs = api_init.data_and_args(request)
     response = api_client(request, nest_calls, data)
     return jsonify(response)
+
 
 @app.route('/api/nest/<call>', methods=['GET', 'POST'])
 @cross_origin()
@@ -105,15 +102,16 @@ def router_topo_call(call):
     return jsonify(response)
 
 
-
-
 # --------------------------
-# NEST simulation request
+# NEST simulation scripts
 # --------------------------
 
-def simulate(data):
+@app.route('/script/<filename>/<call>', methods=['POST', 'OPTIONS'])
+@cross_origin()
+def runscript(filename, call):
     try:
-        data = sim_client.simulate(data)
+        script = scripts.__dict__[filename]
+        data = script.__dict__[call](request)
         response = {'data': data}
     except Exception as e:
         response = {'error': str(e)}
@@ -121,21 +119,11 @@ def simulate(data):
             print('{0}: {2}'.format(*log))
     try:
         if 'data' in response:
-            response['data']['logs'].append((str(datetime.datetime.now()), 'server', 'Jsonify response'))
+            response['data']['logs'].append(
+                (str(datetime.datetime.now()), 'server', 'Jsonify response'))
         return jsonify(response)
     except Exception as e:
         return ''
-
-@app.route('/simulate', methods=['POST', 'OPTIONS'])
-@cross_origin()
-def network_simulate():
-    # return simulate(sim.run, request.get_json())
-    return simulate(request.get_json())
-
-
-# @app.route('/network/resume', methods=['POST'])
-# def network_resume():
-#     return simulate(sim.resume, request.get_json())
 
 
 if __name__ == "__main__":

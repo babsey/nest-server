@@ -3,14 +3,20 @@ From: ubuntu:18.04
 
 %labels
   AUTHOR Sebastian Spreizer <spreizer@web.de>
-  VERSION 1.4.0
+  VERSION 1.5.0
+
+%setup
+  mkdir -p /opt/nest-server/
+
+%files
+  ./app /opt/nest-server/app
+  ./bin /opt/nest-server/bin
 
 %post
   apt-get update && apt-get install -y \
     build-essential \
     cmake \
     cython3 \
-    git \
     libgsl-dev \
     libltdl-dev \
     libncurses5-dev \
@@ -20,17 +26,19 @@ From: ubuntu:18.04
     python3-pip \
     wget
 
-  pip3 install flask==0.12.4 flask-cors
-  git clone https://github.com/babsey/nest-server.git /opt/nest-server
-  git checkout v1.4
+  pip3 install uwsgi flask flask-cors
 
   cd /tmp/
-  wget https://github.com/nest/nest-simulator/archive/v2.16.0.tar.gz
-  tar zxf v2.16.0.tar.gz
+  if [ ! -f "v2.16.0.tar.gz" ]; then
+    wget https://github.com/nest/nest-simulator/archive/v2.16.0.tar.gz
+  fi
+  tar -zxf v2.16.0.tar.gz
 
   rm -rf /tmp/nest-build; mkdir /tmp/nest-build; cd /tmp/nest-build
   cmake -DCMAKE_INSTALL_PREFIX:PATH=/opt/nest-simulator -Dwith-python=3 /tmp/nest-simulator-2.16.0
   make; make install
+
+  rm -rf /tmp/nest-build /tmp/nest-simulator-2.16.0
 
 %environment
   # NEST is installed here. When you relocate NEST, change this variable.
@@ -52,5 +60,9 @@ From: ubuntu:18.04
   # Make nest / sli /... executables visible.
   export PATH=$NEST_INSTALL_DIR/bin:$PATH
 
+  # NEST Server location
+  export NESTSERVER_PATH=/opt/nest-server
+  export PATH=$NESTSERVER_PATH/bin:$PATH
+
 %runscript
-  python3 /opt/nest-server/app/main.py $@
+  nest-server start

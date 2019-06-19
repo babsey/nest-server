@@ -6,6 +6,7 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     cmake \
     cython3 \
+    git \
     libgsl0-dev \
     libltdl7-dev \
     libncurses5-dev \
@@ -14,12 +15,12 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     python3-numpy \
     wget && \
-    pip3 install flask==0.12.4 flask-cors
+    pip3 install uwsgi flask flask-cors
 
 WORKDIR /tmp
 RUN wget https://github.com/nest/nest-simulator/archive/v2.16.0.tar.gz && \
-    tar zxf v2.16.0.tar.gz && \
-    mkdir /tmp/nest-build
+  tar -zxf v2.16.0.tar.gz && \
+  mkdir /tmp/nest-build
 
 WORKDIR /tmp/nest-build
 RUN cmake -DCMAKE_INSTALL_PREFIX:PATH=/opt/nest-simulator/ -Dwith-python=3 /tmp/nest-simulator-2.16.0 && \
@@ -27,10 +28,11 @@ RUN cmake -DCMAKE_INSTALL_PREFIX:PATH=/opt/nest-simulator/ -Dwith-python=3 /tmp/
     make install && \
     rm -rf /tmp/*
 
-COPY ./app /opt/nest-server/app
+RUN git clone https://github.com/babsey/nest-server.git /tmp/nest-server && \
+  cp -rf /tmp/nest-server/app /opt/nest-server/app
 WORKDIR /opt/nest-server/app
 EXPOSE 5000
 
-COPY entrypoint.sh /usr/local/bin/nest-server
+COPY ./docker/entrypoint.sh /usr/local/bin/nest-server
 RUN chmod +x /usr/local/bin/nest-server
 ENTRYPOINT "nest-server"

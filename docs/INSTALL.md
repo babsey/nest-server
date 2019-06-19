@@ -15,13 +15,29 @@ cd nest-server
 Compile and install NEST 2.14 or higher (See [instructions](http://www.nest-simulator.org/installation/)).
 
 ###### Step 2
-Install flask (<= 0.12.4) and flask cors via pip3.
+Install uwsgi flask and flask cors via pip3.
 ```
-sudo pip3 install flask==0.12.4 flask-cors
+sudo pip3 install uwsgi flask flask-cors
 ```
 
-###### Step 3
-Start nest server.
+###### Step 3.a
+Start nest server uwsgi.
+```
+uwsgi uwsgi/uwsgi.ini
+```
+
+###### Step 3.b
+Start nest server with flask.
+```
+export LC_ALL=C.UTF-8
+export LANG=C.UTF-8
+export HOST=0.0.0.0
+export FLASK_APP=app/main.py
+flask run
+```
+
+###### Step 3.c
+Start nest server with flask (lazy start).
 ```
 python3 app/main.py (--host 0.0.0.0)
 ```
@@ -38,7 +54,7 @@ curl localhost:5000
 ###### Step 1
 Build a docker image
 ```
-docker build -f Dockerfiles/nest-server.Dockerfile -t nest-server:X.Y .
+docker build -f docker/dockerfiles/nest-server.Dockerfile -t nest-server:X.Y .
 ```
 ###### Step 1 (alternative)
  Load image from a file (nest-server-vX.Y.dimg)
