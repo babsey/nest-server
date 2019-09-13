@@ -8,7 +8,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="nest-server",
-    version="2.0.0",
+    version="2.0.1",
     description="A server for NEST Simulator with REST API",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -22,5 +22,5 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
     ],
     python_requires=">=3.6",
-    install_requires=["numpy", "flask", "flask-cors", "uwsgi", "nestml"],
+    install_requires=["numpy", "flask==0.12.4", "flask-cors", "uwsgi", "nestml"],
 )
