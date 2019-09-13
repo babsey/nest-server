@@ -5,11 +5,11 @@ From: nestsim/nest:2.18.0
   AUTHOR Sebastian Spreizer <spreizer@web.de>
 
 %runscript
-  uwsgi --http-socket :5000 --module nest_server.main:app
+  nest-server start
 
 %post
   apt-get update && apt-get install -y python3-pip
-  pip3 install uwsgi flask flask-cors nestml --upgrade
+  pip3 install nest-server --upgrade
 
 %environment
   # NEST is installed here. When you relocate NEST, change this variable.

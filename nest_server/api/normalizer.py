@@ -1,4 +1,8 @@
-#!/usr/bin/env python
+__all__ = [
+    'flatten',
+    'unflatten',
+    'utilize',
+]
 
 def flatten(dd, sep='.'):
     items = []

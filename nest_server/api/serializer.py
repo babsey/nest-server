@@ -1,7 +1,9 @@
-#!/usr/bin/env python
-
 import array
 import numpy as np
+
+__all__ = [
+    'serialize',
+]
 
 
 SLILiterals = [

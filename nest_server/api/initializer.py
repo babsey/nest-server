@@ -1,4 +1,6 @@
-#!/usr/bin/env python
+__all__ = [
+    'data_and_args',
+]
 
 def data_and_args(request, call=None):
 

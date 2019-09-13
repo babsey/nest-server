@@ -1,8 +1,3 @@
-#!/usr/bin/env python
-
-VERSION = "1.5.0"
-print('\n\t-- N E S T  Server --\n Version: v%s\n' % (VERSION))
-
 import os
 import optparse
 import datetime
@@ -17,6 +12,8 @@ import nest.topology as topo
 from .api import initializer as api_init
 from .api.client import api_client
 from . import scripts
+
+VERSION = '2.0.0'
 
 app = Flask(__name__)
 CORS(app)
@@ -103,27 +100,24 @@ def router_topo_call(call):
 
 
 # --------------------------
-# NEST simulation scripts
+# Scripts
 # --------------------------
 
 @app.route('/script/<filename>/<call>', methods=['POST', 'OPTIONS'])
 @cross_origin()
-def runscript(filename, call):
+def script(filename, call):
+    # print(request.get_json())
     try:
         script = scripts.__dict__[filename]
-        data = script.__dict__[call](request)
-        response = {'data': data}
+        response = script.__dict__[call](request.get_json())
     except Exception as e:
-        response = {'error': str(e)}
-        for log in data['logs']:
-            print('{0}: {2}'.format(*log))
-    try:
-        if 'data' in response:
-            response['data']['logs'].append(
-                (str(datetime.datetime.now()), 'server', 'Jsonify response'))
-        return jsonify(response)
-    except Exception as e:
-        return ''
+        print(e.__dict__)
+        error = {
+            'name': e.__dict__['errorname'],
+            'message': e.__dict__['errormessage'].split(':')[-1]
+        }
+        response = {'error': error}
+    return jsonify(response)
 
 
 if __name__ == "__main__":

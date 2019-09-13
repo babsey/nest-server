@@ -1,7 +1,9 @@
-#!/usr/bin/env python
-
 import nest
 from .decorator import get_or_error
+
+__all__ = [
+    'api_client',
+]
 
 
 @get_or_error

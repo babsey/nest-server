@@ -1,6 +1,8 @@
-#!/usr/bin/env python
-
 from .serializer import serialize
+
+__all__ = [
+    'get_or_error',
+]
 
 
 def get_or_error(func):
