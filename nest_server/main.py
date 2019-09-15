@@ -13,7 +13,7 @@ from .api import initializer as api_init
 from .api.client import api_client
 from . import scripts
 
-VERSION = '2.0.0'
+VERSION = '2.0.1'
 
 app = Flask(__name__)
 CORS(app)
