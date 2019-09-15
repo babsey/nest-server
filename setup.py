@@ -6,7 +6,7 @@ assert sys.version_info >= (3,), "Python 3 is required to run NEST Server"
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-from nest_server.main import VERSION
+from nest_server.environments import VERSION
 
 setuptools.setup(
     name="nest-server",
