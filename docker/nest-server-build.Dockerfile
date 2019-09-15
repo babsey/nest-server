@@ -33,8 +33,9 @@ RUN apt-get update && apt-get install -y \
     libgsl-dev \
     libltdl-dev \
     python3-numpy \
-    python3-pip && \
-    pip3 install nest-server
+    python3-pip
+
+RUN pip3 install nest-server --upgrade
 
 COPY --from=nest-builder /opt/nest /opt/nest
 

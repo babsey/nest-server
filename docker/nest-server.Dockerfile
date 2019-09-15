@@ -1,8 +1,9 @@
 FROM nestsim/nest:2.18.0
 LABEL maintainer="Sebastian Spreizer <spreizer@web.de>"
 
-RUN apt-get update && apt-get install -y python3-pip && \
-    pip3 install nest-server --upgrade
+RUN apt-get update && apt-get install -y python3-pip
+
+RUN pip3 install nest-server --upgrade
 
 EXPOSE 5000
 
