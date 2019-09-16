@@ -13,7 +13,7 @@ from .api import initializer as api_init
 from .api.client import api_client
 from . import scripts
 
-from .environments import VERSION
+from . import __version__
 
 
 app = Flask(__name__)
@@ -36,10 +36,10 @@ topo_calls.sort()
 def index():
     response = {
         'server': {
-            'version': VERSION,
+            'version': __version__,
             'git': {
                 'ref': 'http://www.github.com/babsey/nest-server',
-                'tag': 'v' + '.'.join(VERSION.split('.')[:-1])
+                'tag': 'v' + '.'.join(__version__.split('.')[:-1])
             }
         },
         'simulator': {

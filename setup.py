@@ -1,16 +1,16 @@
 import setuptools
 import sys
 
+from nest_server import __version__
+
 assert sys.version_info >= (3,), "Python 3 is required to run NEST Server"
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-from nest_server.environments import VERSION
-
 setuptools.setup(
     name="nest-server",
-    version=VERSION,
+    version=__version__,
     description="A server for NEST Simulator with REST API",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -24,5 +24,5 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
     ],
     python_requires=">=3.6",
-    install_requires=["numpy", "flask==0.12.4", "flask-cors", "uwsgi", "nestml"],
+    install_requires=["numpy", "flask", "flask-cors", "uwsgi", "nestml"],
 )
