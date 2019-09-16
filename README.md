@@ -14,7 +14,7 @@ or in a session management (e.g. Docker, Singularity).
 
 To install NEST Server:
 ```
-pip3 install [--user] nest-server
+pip3 install nest-server
 ```
 
 ### Usage
@@ -25,6 +25,7 @@ nest-server start [-h 127.0.0.1 -p 5000]
 ```
 
 Alternatively, to start NEST Server in Python interface (e.g. IPython, Jupyter):
+Note: Flask 0.12.4 is working with this.
 ```
 from nest_server import app
 app.run(host='127.0.0.1', port=5000)
