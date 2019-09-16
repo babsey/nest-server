@@ -15,4 +15,4 @@ echo '. /opt/nest/bin/nest_vars.sh' >> /home/nest/.bashrc
 source /opt/nest/bin/nest_vars.sh
 
 # start NEST Server
-uwsgi --http-socket $HOST:$PORT --uid nest --module nest_server.main:app
+uwsgi --http-socket :5000 --uid nest --module nest_server.main:app
