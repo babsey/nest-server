@@ -14,9 +14,10 @@ Installation
 ==================
 To install NEST Server from python index package (pip):
 
-```
-pip3 install nest-server
-```
+.. code-block::bash
+
+   pip3 install nest-server
+
 
 With this command these requirements are also installed:
  * Numpy
@@ -29,9 +30,10 @@ Getting started
 ==================
 To start NEST Server on the server:
 
-```
-nest-server start
-```
+.. code-block::bash
+
+   nest-server start
+
 
 
 Scripts
