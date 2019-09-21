@@ -4,8 +4,7 @@ NEST Server is a Python server serving for the interaction between the client
 and the NEST Simulator.
 
 
-Requirements
-==================
+Requirements for installing and starting nest-server
  * Python 3.4 or higher
  * NEST Simulator (v2.18.0)
 
@@ -14,7 +13,7 @@ Installation
 ==================
 To install NEST Server from python index package (pip):
 
-.. code-block::bash
+.. code-block:: bash
 
    pip3 install nest-server
 
@@ -30,7 +29,7 @@ Getting started
 ==================
 To start NEST Server on the server:
 
-.. code-block::bash
+.. code-block:: bash
 
    nest-server start
 
