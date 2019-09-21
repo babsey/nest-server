@@ -13,7 +13,7 @@ Installation
 ==================
 To install NEST Server from python index package (pip):
 
-.. code-block:: bash
+.. code-block:: none
 
    pip3 install nest-server
 
@@ -29,7 +29,7 @@ Getting started
 ==================
 To start NEST Server on the server:
 
-.. code-block:: bash
+.. code-block:: none
 
    nest-server start
 
@@ -47,14 +47,14 @@ The RESTful API of NEST Server is defined to forward the request to the function
 
 A schematic of the GET request would looked like it:
 
-.. code-block:: bash
+.. code-block:: none
 
    curl <host>:<port>/api/<module>/<function>?arg1=value1&arg2=value2
 
 
 A schematic of the POST request:
 
-.. code-block:: bash
+.. code-block:: none
 
    curl -d "arg1=value1&arg2=value2" \
       <host>:<port>/api/<module>/<function>
@@ -62,7 +62,7 @@ A schematic of the POST request:
 
 A schematic of the JSON request:
 
-.. code-block:: bash
+.. code-block:: none
 
    curl -H "Content-Type: application/json" \
       -d '{"arg1": "value1", "arg2": "value2"}' \
