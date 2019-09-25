@@ -28,7 +28,7 @@ From: ubuntu:18.04
   pip3 install uwsgi flask flask-cors ipython jupyter nestml --upgrade
 
 %apprun simulator_build
-  export VERSION=2.18.0
+  VERSION=2.18.0
 
   cd /tmp/
   if [ ! -f "v$VERSION.tar.gz" ]; then
@@ -37,7 +37,7 @@ From: ubuntu:18.04
   rm -rf /tmp/nest-simulator-$VERSION
   tar -zxf v$VERSION.tar.gz
   rm -rf /tmp/nest-build; mkdir /tmp/nest-build; cd /tmp/nest-build
-  cmake -DCMAKE_INSTALL_PREFIX:PATH=$HOME/opt/nest-simulator -Dwith-python=3 /tmp/nest-simulator-$VERSION
+  cmake -DCMAKE_INSTALL_PREFIX:PATH=$HOME/opt/nest -Dwith-python=3 /tmp/nest-simulator-$VERSION
   make -j 4; make install
   rm -rf /tmp/nest-simulator-$VERSION /tmp/nest-build
 
@@ -45,28 +45,9 @@ From: ubuntu:18.04
   rm -rf /tmp/models-build
   nestml --input_path ./models --target_path=/tmp/models-build --module_name=nestmlmodule
   cd /tmp/models-build
-  cmake -Dwith-nest=$HOME/opt/nest-simulator/bin/nest-config .
+  cmake -Dwith-nest=$HOME/opt/nest/bin/nest-config .
   make all; make install
   rm -rf /tmp/models-build
 
 %environment
-  # NEST is installed here. When you relocate NEST, change this variable.
-  export NEST_INSTALL_DIR=$HOME/opt/nest-simulator
-
-  # NEST finds standard *.sli files $NEST_DATA_DIR/sli
-  export NEST_DATA_DIR=$NEST_INSTALL_DIR/share/nest
-
-  # NEST finds help files $NEST_DOC_DIR/help
-  export NEST_DOC_DIR=$NEST_INSTALL_DIR/share/doc/nest
-
-  # The path where NEST looks for user modules.
-  export NEST_MODULE_PATH=$NEST_INSTALL_DIR/lib/nest
-
-  # The path where the PyNEST bindings are installed.
-  export NEST_PYTHON_PREFIX=$NEST_INSTALL_DIR/lib/python3.6/site-packages
-
-  # Prepend NEST to PYTHONPATH in a safe way even if PYTHONPATH is undefined
-  export PYTHONPATH=$NEST_PYTHON_PREFIX${PYTHONPATH:+:$PYTHONPATH}
-
-  # Make nest / sli /... executables visible.
-  export PATH=$NEST_INSTALL_DIR/bin:$PATH
+  . $HOME/opt/nest/bin/nest_vars.sh
