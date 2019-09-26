@@ -51,6 +51,13 @@ Starting NEST Server :code:`nest-server start` equivalent to the command:
    uwsgi --module nest_server.main:app --http-socket <host>:<port> --uid <user> --daemonize "/tmp/nest-server-<host>-<port>.log"
 
 
+To start uwsgi with local files:
+
+.. code-block:: none
+
+   uwsgi --module nest_server.main:app --http-socket :5000
+
+
 Python Package Index (PyPI)
 ===========================
 The Python Package Index **nest-server** includes an executive command :code:`nest-server` and a Python library :code:`nest_server`.
