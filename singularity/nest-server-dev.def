@@ -5,10 +5,9 @@ From: nestsim/nest:2.18.0
   AUTHOR Sebastian Spreizer <spreizer@web.de>
 
 %post
-  apt-get update && apt-get install -y python3-pip
-  pip3 install uwsgi flask flask-cors nestml setuptools wheel sphinx sphinx_rtd_theme --upgrade
+  apt-get update && apt-get install -y git python3-pip
+  pip3 install pip uwsgi flask flask-cors nestml setuptools wheel sphinx sphinx_rtd_theme --upgrade
 
 %environment
   . /opt/nest/bin/nest_vars.sh
   export PATH=$PATH:$HOME/.local/bin
-  
