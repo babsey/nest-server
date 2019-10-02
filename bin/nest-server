@@ -1,4 +1,3 @@
-
 #!/bin/bash
 
 HOST="127.0.0.1"
@@ -9,11 +8,11 @@ DAEMONIZE=0
 usage() {
   echo "NEST Server "`version`
   echo "-----------------"
-  echo "Usage: $0 log|version|status|start|stop|restart [-h <HOST>] [-p <PORT>] [-u <UID>]" >&2; exit 1
+  echo "Usage: $0 log|status|start|stop|restart [-d] [-h <HOST>] [-p <PORT>] [-u <UID>]" >&2; exit 1
 }
 
 log() {
-  cat /tmp/nest-server-$HOST-$PORT.log
+  tail -f /tmp/nest-server-$HOST-$PORT.log
 }
 
 pid() {
