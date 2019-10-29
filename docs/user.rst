@@ -1,5 +1,5 @@
-Introduction
-==================
+Usage
+=====
 NEST Server is a server serving for the interaction between an application as a client
 and the NEST Simulator.
 
@@ -8,52 +8,64 @@ Requirements for installing and starting nest-server
 
 
 Installation
-==================
+------------
 To install NEST Server from python index package (pip):
 
-.. code-block:: none
+.. code-block:: bash
 
    pip3 install nest-server
 
 
 Getting started
-==================
+---------------
 To start NEST Server on the server:
 
-.. code-block:: none
+.. code-block:: bash
 
    nest-server start
 
 
 Advanced
-========
+--------
 
 Options for nest-server (Defaults for host=127.0.0.1, port=5000)
 
-.. code-block:: none
+.. code-block:: bash
 
    nest-server <command> [-d] [-h <host>] [-p <port>] [-u <user>]
 
 Showing usage for nest-server
 
-.. code-block:: none
+.. code-block:: bash
 
    nest-server
 
-It stops NEST Desktop serving at defined address.
+Start NEST Server serving at default address.
 
-.. code-block:: none
+.. code-block:: bash
+
+   nest-server start
+
+Stop NEST Server serving at default address.
+
+.. code-block:: bash
 
    nest-server stop
 
-It lists status of NEST Server serving at different addresses.
+List status of NEST Server serving at different addresses.
 
-.. code-block:: none
+.. code-block:: bash
 
    nest-server status
 
-It prints the current version of NEST Server.
+Print the current version of NEST Server.
 
-.. code-block:: none
+.. code-block:: bash
 
    nest-server version
+
+Monitor the requests of NEST Server.
+
+.. code-block:: bash
+
+   nest-server log

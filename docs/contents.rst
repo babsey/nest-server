@@ -1,14 +1,11 @@
-NEST Server
-=======================================
-
 .. toctree::
    :maxdepth: 2
-   :caption: User Documentation:
+   :caption: User Documentations
 
    user
 
 .. toctree::
    :maxdepth: 2
-   :caption: Developer Documentation
+   :caption: Developer Documentations
 
    developer

@@ -1,5 +1,5 @@
-Introduction
-============
+Development
+===========
 NEST Server is a Python server serving for the interaction between the client
 and the NEST Simulator.
 
@@ -10,7 +10,7 @@ Requirements for nest-server
 
 
 Development environment
-=======================
+-----------------------
 
 Build singularity image containing requirements (NEST, Python packages) for developing NEST Server.
 
@@ -26,7 +26,7 @@ Run singularity container
 
 
 Setup
-=====
+-----
 Clone NEST Server from the github:
 
 .. code-block:: none
@@ -42,7 +42,7 @@ Best option is to install it in user home using :code:`pip install --user`.
 
 
 Getting started
-===============
+---------------
 You can read `Getting started` in User Documentation to start NEST Server.
 Starting NEST Server :code:`nest-server start` equivalent to the command:
 
@@ -59,7 +59,7 @@ To start uwsgi with local files:
 
 
 Python Package Index (PyPI)
-===========================
+---------------------------
 The Python Package Index **nest-server** includes an executive command :code:`nest-server` and a Python library :code:`nest_server`.
 
 First, update the version of nest-server in :code:`nest_server/__init__.py`.
@@ -84,7 +84,7 @@ Finally, upload `nest-server` to PyPI:
 
 
 Sphinx documentation
-====================
+--------------------
 To install sphinx and readthedocs theme via  :code:`pip`:
 
 .. code-block:: none
@@ -100,20 +100,20 @@ To build sphinx documentation to  :code:`_build` folder:
 
 
 Readthedocs webpage
-===================
+-------------------
 It automatically builds docs for master when pulling commits to master.
 Docs for latest and stable depends on their github tags.
 
 
 
 Scripts
-=======
+-------
 - A script for simulation.
 - A script for building models.
 
 
 RESTful API
-===========
+-----------
 The RESTful API of NEST Server is defined to forward the request to the function of the module directly.
 
 A schematic of the GET request would looked like it:
