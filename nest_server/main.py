@@ -1,6 +1,7 @@
 import os
 import optparse
 import datetime
+import inspect
 
 import flask
 from flask import Flask, request, jsonify
@@ -34,20 +35,19 @@ topo_calls.sort()
 
 @app.route('/', methods=['GET'])
 def index():
-    response = {
-        'server': {
-            'version': __version__,
-            'git': {
-                'ref': 'http://www.github.com/babsey/nest-server',
-                'tag': 'v' + '.'.join(__version__.split('.')[:-1])
-            }
-        },
-        'simulator': {
-            'env': dict(filter(lambda item: 'NEST_' in item[0], os.environ.items())),
-            'version': nest.version().split(' ')[1],
-        },
-    }
-    return jsonify(response)
+  response = {
+      'server': {
+          'version': __version__,
+          'git': {
+              'ref': 'http://www.github.com/babsey/nest-server',
+              'tag': 'v' + '.'.join(__version__.split('.')[:-1])
+          }
+      },
+      'simulator': {
+          'version': nest.version().split('-')[1],
+      },
+  }
+  return jsonify(response)
 
 
 # --------------------------
@@ -57,47 +57,47 @@ def index():
 @app.route('/api/nest', methods=['GET'])
 @cross_origin()
 def router_nest():
-    data, args, kwargs = api_init.data_and_args(request)
-    response = api_client(request, nest_calls, data)
-    return jsonify(response)
+  data, args, kwargs = api_init.data_and_args(request)
+  response = api_client(request, nest_calls, data)
+  return jsonify(response)
 
 
 @app.route('/api/nest/<call>', methods=['GET', 'POST'])
 @cross_origin()
 def router_nest_call(call):
-    data, args, kwargs = api_init.data_and_args(request, call)
-    if call in nest_calls:
-        call = nest.__dict__[call]
-        response = api_client(request, call, data, *args, **kwargs)
-    else:
-        data['response']['msg'] = 'The request cannot be called in NEST.'
-        data['response']['status'] = 'error'
-        response = data
-    return jsonify(response)
+  data, args, kwargs = api_init.data_and_args(request, call)
+  if call in nest_calls:
+    call = getattr(nest, call)
+    response = api_client(request, call, data, *args, **kwargs)
+  else:
+    data['response']['msg'] = 'The request cannot be called in NEST.'
+    data['response']['status'] = 'error'
+    response = data
+  return jsonify(response)
 
 
 @app.route('/api/topo', methods=['GET'])
 @app.route('/api/nest_topology', methods=['GET'])
 @cross_origin()
 def router_topo():
-    data, args, kwargs = api_init.data_and_args(request)
-    response = api_client(request, topo_calls, data)
-    return jsonify(response)
+  data, args, kwargs = api_init.data_and_args(request)
+  response = api_client(request, topo_calls, data)
+  return jsonify(response)
 
 
 @app.route('/api/topo/<call>', methods=['GET', 'POST'])
 @app.route('/api/nest_topology/<call>', methods=['GET', 'POST'])
 @cross_origin()
 def router_topo_call(call):
-    data, args, kwargs = api_init.data_and_args(request, call)
-    if call in topo_calls:
-        call = topo.__dict__[call]
-        response = api_client(request, call, data, *args, **kwargs)
-    else:
-        data['response']['msg'] = 'The request cannot be called in NEST Topology.'
-        data['response']['status'] = 'error'
-        response = data
-    return jsonify(response)
+  data, args, kwargs = api_init.data_and_args(request, call)
+  if call in topo_calls:
+    call = getattr(topo, call)
+    response = api_client(request, call, data, *args, **kwargs)
+  else:
+    data['response']['msg'] = 'The request cannot be called in NEST Topology.'
+    data['response']['status'] = 'error'
+    response = data
+  return jsonify(response)
 
 
 # --------------------------
@@ -107,26 +107,84 @@ def router_topo_call(call):
 @app.route('/script/<filename>/<call>', methods=['POST', 'OPTIONS'])
 @cross_origin()
 def script(filename, call):
-    # print(request.get_json())
-    try:
-        script = scripts.__dict__[filename]
-        response = script.__dict__[call](request.get_json())
-    except Exception as e:
-        print(e.__dict__)
-        error = {
-            'name': e.__dict__['errorname'],
-            'message': e.__dict__['errormessage'].split(':')[-1]
-        }
-        response = {'error': error}
-    return jsonify(response)
+  # print(request.get_json())
+  try:
+    script = getattr(scripts, filename)
+    func = getattr(script, call)
+    response = func(request.get_json())
+  except Exception as e:
+    print(e)
+    error = {
+        'name': getattr(e, 'errorname'),
+        'message': getattr(e, 'errormessage').split(':')[-1]
+    }
+    response = {'error': error}
+  return jsonify(response)
+
+
+@app.route('/source', methods=['GET'])
+@cross_origin()
+def inspect_files():
+  try:
+    source = inspect.getsource(scripts)
+    response = {
+        'source': source,
+    }
+  except Exception as e:
+    print(e)
+    error = {
+        'name': getattr(e, 'errorname'),
+        'message': getattr(e, 'errormessage').split(':')[-1]
+    }
+    response = {'error': error}
+  return jsonify(response)
+
+
+@app.route('/source/<filename>', methods=['GET'])
+@cross_origin()
+def inspect_script(filename):
+  try:
+    script = getattr(scripts, filename)
+    source = inspect.getsource(script)
+    response = {
+        'source': source,
+    }
+  except Exception as e:
+    print(e)
+    error = {
+        'name': getattr(e, 'errorname'),
+        'message': getattr(e, 'errormessage').split(':')[-1]
+    }
+    response = {'error': error}
+  return jsonify(response)
+
+
+@app.route('/source/<filename>/<call>', methods=['GET'])
+@cross_origin()
+def inspect_func(filename, call):
+  try:
+    script = getattr(scripts, filename)
+    func = getattr(script, call)
+    source = inspect.getsource(func)
+    response = {
+        'source': source,
+    }
+  except Exception as e:
+    print(e)
+    error = {
+        'name': getattr(e, 'errorname'),
+        'message': getattr(e, 'errormessage').split(':')[-1]
+    }
+    response = {'error': error}
+  return jsonify(response)
 
 
 if __name__ == "__main__":
-    parser = optparse.OptionParser("usage: python main.py [options]")
-    parser.add_option("-H", "--host", dest="hostname",
-                      default="127.0.0.1", type="string",
-                      help="specify hostname to run on")
-    parser.add_option("-p", "--port", dest="port", default=5000,
-                      type="int", help="port to run on")
-    (options, args) = parser.parse_args()
-    app.run(host=options.hostname, port=options.port)
+  parser = optparse.OptionParser("usage: python main.py [options]")
+  parser.add_option("-H", "--host", dest="hostname",
+                    default="127.0.0.1", type="string",
+                    help="specify hostname to run on")
+  parser.add_option("-p", "--port", dest="port", default=5000,
+                    type="int", help="port to run on")
+  (options, args) = parser.parse_args()
+  app.run(host=options.hostname, port=options.port)

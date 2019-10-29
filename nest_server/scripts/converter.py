@@ -24,19 +24,14 @@ def write_block(header, content):
 
 
 def json_to_nestml_format(data):
-
   s = ''
   if 'doc' in data:
     s += '/*\n' + data['doc'] + '\n*/\n'
-
   s += 'neuron %s:\n' % data['neuron']
-
   for block in blocks:
     if block in data:
       s += write_block(block, data[block])
-
   s += 'output: %s\n' % data['output']
-
   s += 'end\n'
   return s
 

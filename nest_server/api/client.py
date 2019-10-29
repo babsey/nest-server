@@ -1,4 +1,6 @@
+import inspect
 import nest
+
 from .decorator import get_or_error
 
 __all__ = [
@@ -14,6 +16,8 @@ def api_client(request, call, data, *args, **kwargs):
 
         if str(kwargs.get('return_doc', 'false')) == 'true':
             response = call.__doc__
+        if str(kwargs.get('return_source', 'false')) == 'true':
+            response = inspect.getsource(call)
         else:
             if call.__name__ == 'SetKernelStatus':
                 kernelStatus = nest.GetKernelStatus()

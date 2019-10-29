@@ -22,7 +22,7 @@ From: ubuntu:18.04
   python3-pip \
   wget
 
-  pip3 install nest-server==2.*.*
+  pip3 install nest-server==2.1.*
 
   cd /tmp/
   VERSION=2.18.0
