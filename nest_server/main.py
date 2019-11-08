@@ -112,11 +112,18 @@ def script(filename, call):
     script = getattr(scripts, filename)
     func = getattr(script, call)
     response = func(request.get_json())
-  except Exception as e:
+  except nest.kernel.NESTError as e:
     print(e)
     error = {
         'name': getattr(e, 'errorname'),
         'message': getattr(e, 'errormessage').split(':')[-1]
+    }
+    response = {'error': error}
+  except Exception as e:
+    print(e)
+    error = {
+        'name': 'Error',
+        'message': str(e)
     }
     response = {'error': error}
   return jsonify(response)
@@ -133,8 +140,8 @@ def inspect_files():
   except Exception as e:
     print(e)
     error = {
-        'name': getattr(e, 'errorname'),
-        'message': getattr(e, 'errormessage').split(':')[-1]
+        'name': 'Error',
+        'message': str(e)
     }
     response = {'error': error}
   return jsonify(response)
@@ -152,8 +159,8 @@ def inspect_script(filename):
   except Exception as e:
     print(e)
     error = {
-        'name': getattr(e, 'errorname'),
-        'message': getattr(e, 'errormessage').split(':')[-1]
+        'name': 'Error',
+        'message': str(e)
     }
     response = {'error': error}
   return jsonify(response)
@@ -172,8 +179,8 @@ def inspect_func(filename, call):
   except Exception as e:
     print(e)
     error = {
-        'name': getattr(e, 'errorname'),
-        'message': getattr(e, 'errormessage').split(':')[-1]
+        'name': 'Error',
+        'message': str(e)
     }
     response = {'error': error}
   return jsonify(response)
