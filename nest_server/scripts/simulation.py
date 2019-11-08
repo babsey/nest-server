@@ -24,6 +24,7 @@ def log(message):
 
 
 def run(data):
+  # print(data)
   logs = []
 
   logs.append(log('Get request'))
@@ -62,13 +63,13 @@ def run(data):
     if 'record_from' in model['params']:
       continue
 
-    recs = list(filter(lambda conn: conn['pre'] == idx, connectomes))
+    recs = list(filter(lambda conn: conn['source'] == idx, connectomes))
     if len(recs) == 0:
       continue
 
     recordable_models = []
     for conn in recs:
-      recordable_model = models[collections[conn['post']]['model']]
+      recordable_model = models[collections[conn['target']]['model']]
       recordable_models.append(recordable_model['existing'])
     recordable_models_set = list(set(recordable_models))
     assert len(recordable_models_set) == 1
@@ -117,22 +118,39 @@ def run(data):
 
   logs.append(log('Connect collections'))
   for connectome in connectomes:
-    pre = collections[connectome['pre']]
-    post = collections[connectome['post']]
-    pre_obj = collections_obj[connectome['pre']]
-    post_obj = collections_obj[connectome['post']]
-    if ('spatial' in pre) and ('spatial' in post):
+    source = collections[connectome['source']]
+    target = collections[connectome['target']]
+    source_obj = collections_obj[connectome['source']]
+    target_obj = collections_obj[connectome['target']]
+    if ('spatial' in source) and ('spatial' in target):
       projections = connectome['projections']
-      tp.ConnectLayers(pre_obj, post_obj, serialize.projections(projections))
+      tp.ConnectLayers(source_obj, target_obj, serialize.projections(projections))
     else:
       conn_spec = connectome.get('conn_spec', 'all_to_all')
       syn_spec = connectome.get('syn_spec', 'static_synapse')
       # NEST 2.18
-      pre_nodes = getNodes(pre_obj, pre)
-      post_nodes = getNodes(post_obj, post)
-      nest.Connect(pre_nodes, post_nodes, serialize.conn(conn_spec), serialize.syn(syn_spec))
+      source_nodes = getNodes(source_obj, source)
+      target_nodes = getNodes(target_obj, target)
+      if 'post' in connectome:
+        post_idx = connectome['post']
+        if len(post_idx) > 0:
+          if isinstance(post_idx[0], int):
+            pre = source_nodes
+            post = np.array(target_nodes)[post_idx].tolist()
+            nest.Connect(pre, post, serialize.conn(conn_spec), serialize.syn(syn_spec))
+          else:
+            for idx in range(len(post_idx)):
+              post = np.array(target_nodes)[post_idx[idx]].tolist()
+              if 'pre' in connectome:
+                pre_idx = connectome['pre']
+                pre = np.array(source_nodes)[pre_idx[idx]].tolist()
+              else:
+                pre = [source_nodes[idx]]
+              nest.Connect(pre, post, serialize.conn(conn_spec), serialize.syn(syn_spec))
+      else:
+        nest.Connect(source_nodes, target_nodes, serialize.conn(conn_spec), serialize.syn(syn_spec))
       # NEST 3
-      # nest.Connect(pre_obj, post_obj, serialize.conn(conn_spec), serialize.syn(syn_spec))
+      # nest.Connect(source_obj, target_obj, serialize.conn(conn_spec), serialize.syn(syn_spec))
 
   logs.append(log('Start simulation'))
   nest.Simulate(float(simtime))
@@ -144,22 +162,20 @@ def run(data):
   ndigits = int(-1 * np.log10(resolution))
   for idx, record in enumerate(records):
     records[idx]['idx'] = idx
-    global_ids = []
     if record['recorder']['model'] == 'spike_detector':
-      rec = 'post'
-      neuron = 'pre'
+      neuron, rec = 'source', 'target'
     else:
-      rec = 'pre'
-      neuron = 'post'
-  for connectome in connectomes:
-    if connectome[rec] == record['recorder']['idx']:
-      collection = collections[connectome[neuron]]
-      global_ids.extend(collection['global_ids'])
-    records[idx]['global_ids'] = global_ids
-    recorder_obj = collections_obj[record['recorder']['idx']]
-    events = serialize.events(recorder_obj, ndigits)
-    records[idx]['events'] = events
-    records[idx]['senders'] = list(set(events['senders']))
+      rec, neuron = 'source', 'target'
+    global_ids = []
+    for connectome in connectomes:
+      if connectome[rec] == record['recorder']['idx']:
+        collection = collections[connectome[neuron]]
+        global_ids.extend(collection['global_ids'])
+      records[idx]['global_ids'] = global_ids
+      recorder_obj = collections_obj[record['recorder']['idx']]
+      events = serialize.events(recorder_obj, ndigits)
+      records[idx]['events'] = events
+      records[idx]['senders'] = list(set(events['senders']))
   data['records'] = records
 
   return {'data': data, 'logs': logs}
