@@ -131,22 +131,22 @@ def run(data):
       # NEST 2.18
       source_nodes = getNodes(source_obj, source)
       target_nodes = getNodes(target_obj, target)
-      if 'post' in connectome:
-        post_idx = connectome['post']
-        if len(post_idx) > 0:
-          if isinstance(post_idx[0], int):
-            pre = source_nodes
-            post = np.array(target_nodes)[post_idx].tolist()
-            nest.Connect(pre, post, serialize.conn(conn_spec), serialize.syn(syn_spec))
+      if 'tgt_idx' in connectome:
+        tgt_idx = connectome['tgt_idx']
+        if len(tgt_idx) > 0:
+          if isinstance(tgt_idx[0], int):
+            source = source_nodes
+            target = np.array(target_nodes)[tgt_idx].tolist()
+            nest.Connect(source_nodes, target, serialize.conn(conn_spec), serialize.syn(syn_spec))
           else:
-            for idx in range(len(post_idx)):
-              post = np.array(target_nodes)[post_idx[idx]].tolist()
-              if 'pre' in connectome:
-                pre_idx = connectome['pre']
-                pre = np.array(source_nodes)[pre_idx[idx]].tolist()
+            for idx in range(len(tgt_idx)):
+              target = np.array(target_nodes)[tgt_idx[idx]].tolist()
+              if 'src_idx' in connectome:
+                src_idx = connectome['src_idx']
+                source = np.array(source_nodes)[src_idx[idx]].tolist()
               else:
-                pre = [source_nodes[idx]]
-              nest.Connect(pre, post, serialize.conn(conn_spec), serialize.syn(syn_spec))
+                source = [source_nodes[idx]]
+              nest.Connect(source, target, serialize.conn(conn_spec), serialize.syn(syn_spec))
       else:
         nest.Connect(source_nodes, target_nodes, serialize.conn(conn_spec), serialize.syn(syn_spec))
       # NEST 3
