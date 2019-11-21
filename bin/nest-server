@@ -12,7 +12,7 @@ usage() {
 }
 
 log() {
-  tail -f /tmp/nest-server-$HOST-$PORT.log
+  tail -f /var/log/nest-server.log
 }
 
 pid() {
@@ -38,7 +38,7 @@ start() {
   if [ "`ps-check`" ]; then
     echo "NEST Server is already serving at http://$HOST:$PORT."
   else
-    uwsgi --module nest_server.main:app --http-socket $HOST:$PORT --uid $USER --daemonize "/tmp/nest-server-$HOST-$PORT.log"
+    uwsgi --module nest_server.main:app --http-socket $HOST:$PORT --uid $USER --daemonize "/var/log/nest-server.log"
     if [ "`ps-check`" ]; then
       echo "NEST Server is serving at http://$HOST:$PORT."
       if [ $DAEMONIZE == 0 ]; then
@@ -59,7 +59,7 @@ status() {
 
 stop() {
   if [ `pid` ]; then
-    kill `pid`
+    kill -9 `pid`
     echo "NEST Server serving at http://$HOST:$PORT has stopped."
   else
     echo "NEST Server is not serving at http://$HOST:$PORT."
