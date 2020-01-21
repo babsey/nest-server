@@ -16,13 +16,13 @@ neurons = b['response']['data']
 c = nest_api('Create', {"model": "poisson_generator", "params": {"rate": 10.}})
 pg = c['response']['data']
 
-e = nest_api('Create', {"model": "voltmeter"})
-vm = e['response']['data']
+d = nest_api('Create', {"model": "voltmeter"})
+vm = d['response']['data']
 
-f = nest_api('Connect', {"pre": pg, "post": neurons})
-g = nest_api('Connect', {"pre": vm, "post": neurons})
+e = nest_api('Connect', {"pre": pg, "post": neurons})
+f = nest_api('Connect', {"pre": vm, "post": neurons})
 
-h = nest_api('Simulate', {"t": 1000.})
-i = nest_api('GetStatus', {"nodes": vm})
+g = nest_api('Simulate', {"t": 1000.})
+h = nest_api('GetStatus', {"nodes": vm})
 
-print(i['response']['data'][0]['n_events'])
+print(h['response']['data'][0]['n_events'])
