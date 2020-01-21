@@ -1,5 +1,5 @@
 Bootstrap: docker
-From: nestsim/nest:2.18.0
+From: nestsim/nest:3.0
 
 %labels
   AUTHOR Sebastian Spreizer <spreizer@web.de>
@@ -9,7 +9,7 @@ From: nestsim/nest:2.18.0
 
 %post
   apt-get update && apt-get install -y python3-pip
-  pip3 install nest-server --upgrade
+  pip3 install nest-server==3.0.0 --upgrade
 
 %environment
   . /opt/nest/bin/nest_vars.sh

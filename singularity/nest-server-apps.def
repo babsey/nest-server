@@ -48,6 +48,3 @@ From: ubuntu:18.04
   cmake -Dwith-nest=$HOME/opt/nest/bin/nest-config .
   make all; make install
   rm -rf /tmp/models-build
-
-%environment
-  . $HOME/opt/nest/bin/nest_vars.sh
