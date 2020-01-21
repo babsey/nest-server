@@ -2,27 +2,25 @@ import requests
 import json
 
 
-def nest_api(call, params={}):
-  return requests.post(url + call, json.dumps(params), headers=headers).json()
+def nest_api(call, url='http://localhost:5000/api/nest/', *args, **kwargs):
+  headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
+  data = requests.post(url + call, json.dumps(kwargs), headers=headers).json()
+  response = data['response']
+  print('%s ... %s' %(call, response['status']))
+  if (response['status'] == 'error'):
+    print(' - %s' %response['msg'])
+  return response['data']
 
 
-url = 'http://localhost:5000/api/nest/'
-headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
 
-a = nest_api('ResetKernel')
-b = nest_api('Create', {"model": "iaf_psc_alpha", "n": 10})
-neurons = b['response']['data']
+nest_api('ResetKernel')
+neurons = nest_api('Create', model="iaf_psc_alpha", n=10)
+pg = nest_api('Create', model="poisson_generator", params={"rate": 10.})
+vm = nest_api('Create', model="voltmeter")
 
-c = nest_api('Create', {"model": "poisson_generator", "params": {"rate": 10.}})
-pg = c['response']['data']
+nest_api('Connect', pre=pg, post=neurons)
+nest_api('Connect', pre=vm, post=neurons)
 
-d = nest_api('Create', {"model": "voltmeter"})
-vm = d['response']['data']
-
-e = nest_api('Connect', {"pre": pg, "post": neurons})
-f = nest_api('Connect', {"pre": vm, "post": neurons})
-
-g = nest_api('Simulate', {"t": 1000.})
-h = nest_api('GetStatus', {"nodes": vm})
-
-print(h['response']['data'][0]['n_events'])
+nest_api('Simulate', t=1000.)
+events = nest_api('GetStatus', nodes=vm, keys='n_events')[0]
+print('Number of events:', events)
