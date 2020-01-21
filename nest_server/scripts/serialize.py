@@ -1,5 +1,4 @@
 import nest
-import nest.topology as tp
 import numpy as np
 
 __all__ = [
@@ -9,7 +8,7 @@ __all__ = [
     'syn',
     'events',
     'layer',
-    'projections',
+    # 'projections',
 ]
 
 
@@ -110,17 +109,17 @@ def mask(masktype, specs):
   return tp.CreateMask(masktype=masktype, specs=newSpecs)
 
 
-def projections(specs):
-  newSpecs = {}
-  newSpecs['connection_type'] = specs.get('connection_type', 'divergent')
-  if 'kernel' in specs:
-    newSpecs['kernel'] = parameter(specs['kernel'])
-  if 'number_of_connections' in specs:
-    newSpecs['number_of_connections'] = int(specs['number_of_connections'])
-  if 'mask' in specs:
-    newSpecs['mask'] = mask(specs['mask']['masktype'], specs['mask']['specs'])
-  newSpecs['allow_autapses'] = bool(specs.get('allow_autapses', True))
-  newSpecs['allow_multapses'] = bool(specs.get('allow_multapses', True))
-  newSpecs['weights'] = parameter(specs.get('weights', 1.))
-  newSpecs['delays'] = parameter(specs.get('delay', 1.))
-  return newSpecs
+# def projections(specs):
+#   newSpecs = {}
+#   newSpecs['connection_type'] = specs.get('connection_type', 'divergent')
+#   if 'kernel' in specs:
+#     newSpecs['kernel'] = parameter(specs['kernel'])
+#   if 'number_of_connections' in specs:
+#     newSpecs['number_of_connections'] = int(specs['number_of_connections'])
+#   if 'mask' in specs:
+#     newSpecs['mask'] = mask(specs['mask']['masktype'], specs['mask']['specs'])
+#   newSpecs['allow_autapses'] = bool(specs.get('allow_autapses', True))
+#   newSpecs['allow_multapses'] = bool(specs.get('allow_multapses', True))
+#   newSpecs['weights'] = parameter(specs.get('weights', 1.))
+#   newSpecs['delays'] = parameter(specs.get('delay', 1.))
+#   return newSpecs

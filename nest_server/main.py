@@ -8,7 +8,10 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS, cross_origin
 
 import nest
-import nest.topology as topo
+try:
+  nest.Install("nestmlmodule")
+except ImportError:
+  pass
 
 from .api import initializer as api_init
 from .api.client import api_client
@@ -23,10 +26,6 @@ CORS(app)
 nest_calls = dir(nest)
 nest_calls = list(filter(lambda x: not x.startswith('_'), nest_calls))
 nest_calls.sort()
-
-topo_calls = dir(topo)
-topo_calls = list(filter(lambda x: not x.startswith('_'), topo_calls))
-topo_calls.sort()
 
 
 # --------------------------
@@ -71,30 +70,6 @@ def router_nest_call(call):
     response = api_client(request, call, data, *args, **kwargs)
   else:
     data['response']['msg'] = 'The request cannot be called in NEST.'
-    data['response']['status'] = 'error'
-    response = data
-  return jsonify(response)
-
-
-@app.route('/api/topo', methods=['GET'])
-@app.route('/api/nest_topology', methods=['GET'])
-@cross_origin()
-def router_topo():
-  data, args, kwargs = api_init.data_and_args(request)
-  response = api_client(request, topo_calls, data)
-  return jsonify(response)
-
-
-@app.route('/api/topo/<call>', methods=['GET', 'POST'])
-@app.route('/api/nest_topology/<call>', methods=['GET', 'POST'])
-@cross_origin()
-def router_topo_call(call):
-  data, args, kwargs = api_init.data_and_args(request, call)
-  if call in topo_calls:
-    call = getattr(topo, call)
-    response = api_client(request, call, data, *args, **kwargs)
-  else:
-    data['response']['msg'] = 'The request cannot be called in NEST Topology.'
     data['response']['status'] = 'error'
     response = data
   return jsonify(response)

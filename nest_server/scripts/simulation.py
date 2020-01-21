@@ -1,7 +1,6 @@
 import datetime
-import nest
-import nest.topology as tp
 import numpy as np
+import nest
 
 from . import serialize
 
@@ -10,12 +9,26 @@ __all__ = [
 ]
 
 
-def getNodes(collection, meta):
-  if 'spatial' in meta:
-    nodes = nest.GetNodes(collection)[0]
-  else:
-    nodes = collection
-  return nodes
+def getPositions(node):
+  if 'spatial' in node:
+    spatial = node['spatial']
+    if ('positions' in spatial):
+      specs = {
+          'positions': spatial['positions'],
+          'extent': spatial.get('extent', None),
+          'edge_wrap': spatial.get('edge_wrap', False),
+          'num_dimension': spatial.get('num_dimension', None),
+      }
+      return nest.spatial.free(**specs)
+    else:
+      specs = {
+          'shape': spatial['shape'],
+          'center': spatial.get('center', None),
+          'extent': spatial.get('extent', None),
+          'edge_wrap': spatial.get('edge_wrap', False)
+      }
+      return nest.spatial.grid(**specs)
+  return None
 
 
 def log(message):
@@ -31,10 +44,10 @@ def run(data):
   simtime = data.get('time', 1000.0)
   kernel = data.get('kernel', {})
   models = data['models']
-  collections = data['collections']
-  connectomes = data['connectomes']
+  nodes = data['collections']
+  connections = data['connectomes']
   records = []
-  collections_obj = []
+  nodes_obj = []
 
   logs.append(log('Reset kernel'))
   nest.ResetKernel()
@@ -55,21 +68,21 @@ def run(data):
   data['kernel'] = kernel_dict
 
   logs.append(log('Collect all recordables for multimeter'))
-  for idx, collection in enumerate(collections):
-    model = models[collection['model']]
+  for idx, node in enumerate(nodes):
+    model = models[node['model']]
     if model['existing'] != 'multimeter':
       continue
 
     if 'record_from' in model['params']:
       continue
 
-    recs = list(filter(lambda conn: conn['source'] == idx, connectomes))
+    recs = list(filter(lambda conn: conn['source'] == idx, connections))
     if len(recs) == 0:
       continue
 
     recordable_models = []
     for conn in recs:
-      recordable_model = models[collections[conn['target']]['model']]
+      recordable_model = models[nodes[conn['target']]['model']]
       recordable_models.append(recordable_model['existing'])
     recordable_models_set = list(set(recordable_models))
     assert len(recordable_models_set) == 1
@@ -82,75 +95,54 @@ def run(data):
     params_serialized = serialize.model_params(model['existing'], model['params'])
     nest.CopyModel(model['existing'], new, params_serialized)
 
-  logs.append(log('Create collections'))
-  for idx, collection in enumerate(collections):
-    collections[idx]['idx'] = idx
-    if 'spatial' in collection:
-      specs = collection['spatial']
-      specs['elements'] = collection['model']
-      obj = tp.CreateLayer(serialize.layer(specs))
-      if 'positions' in specs:
-        positions = specs['positions']
-      else:
-        positions = tp.GetPosition(nest.GetNodes(obj)[0])
+  logs.append(log('Create nodes'))
+  for idx, node in enumerate(nodes):
+    nodes[idx]['idx'] = idx
+    n = int(node.get('n', 1))
+    positions = getPositions(node)
+    node_obj = nest.Create(node['model'], n, positions=positions)
+    nodes[idx]['global_ids'] = node_obj.tolist()
+    if positions:
+      positions = nest.GetPosition(obj)
       positions = np.round(positions, decimals=2).astype(float)
-      collections[idx]['spatial']['positions'] = positions.tolist()
-      collections[idx]['n'] = positions.shape[0]
-      collections[idx]['ndim'] = positions.ndim
-      collections[idx]['global_ids'] = nest.GetNodes(obj)[0]
-    else:
-      n = int(collection.get('n', 1))
-      obj = nest.Create(collection['model'], n)
-      collections[idx]['global_ids'] = list(obj)
-      if collection['element_type'] == 'recorder':
-        model = models[collection['model']]
-        record = {
-            'recorder': {
-                'global_ids': list(obj),
-                'idx': idx,
-                'model': model['existing']
-            }
-        }
-        if 'record_from' in model['params']:
-          record['record_from'] = model['params']['record_from']
-        records.append(record)
-    collections_obj.append(obj)
+      nodes[idx]['spatial']['positions'] = positions.tolist()
+      nodes[idx]['n'] = positions.shape[0]
+      nodes[idx]['ndim'] = positions.ndim
+    if node['element_type'] == 'recorder':
+      model = models[node['model']]
+      record = {
+          'recorder': {
+              'global_ids': list(obj),
+              'idx': idx,
+              'model': model['existing']
+          }
+      }
+      if 'record_from' in model['params']:
+        record['record_from'] = model['params']['record_from']
+      records.append(record)
+    nodes_obj.append(obj)
 
-  logs.append(log('Connect collections'))
-  for connectome in connectomes:
-    source = collections[connectome['source']]
-    target = collections[connectome['target']]
-    source_obj = collections_obj[connectome['source']]
-    target_obj = collections_obj[connectome['target']]
-    if ('spatial' in source) and ('spatial' in target):
-      projections = connectome['projections']
-      tp.ConnectLayers(source_obj, target_obj, serialize.projections(projections))
+  logs.append(log('Connect nodes'))
+  for connection in connections:
+    source_obj = nodes_obj[connection['source']]
+    target_obj = nodes_obj[connection['target']]
+    conn_spec = serialize.conn(connection.get('conn_spec', 'all_to_all'))
+    syn_spec = serialize.syn(connection.get('syn_spec', 'static_synapse'))
+    if 'tgt_idx' in connection:
+      tgt_idx = connection['tgt_idx']
+      if len(tgt_idx) > 0:
+        if isinstance(tgt_idx[0], int):
+          nest.Connect(source_obj, target_obj[tgt_idx], conn_spec, syn_spec)
+        else:
+          for idx in range(len(tgt_idx)):
+            if 'src_idx' in connection:
+              source = source_obj[connection['src_idx'][idx]]
+            else:
+              source = [source_obj[idx]]
+            target = target_obj[tgt_idx[idx]]
+            nest.Connect(source, target, conn_spec, syn_spec)
     else:
-      conn_spec = connectome.get('conn_spec', 'all_to_all')
-      syn_spec = connectome.get('syn_spec', 'static_synapse')
-      # NEST 2.18
-      source_nodes = getNodes(source_obj, source)
-      target_nodes = getNodes(target_obj, target)
-      if 'tgt_idx' in connectome:
-        tgt_idx = connectome['tgt_idx']
-        if len(tgt_idx) > 0:
-          if isinstance(tgt_idx[0], int):
-            source = source_nodes
-            target = np.array(target_nodes)[tgt_idx].tolist()
-            nest.Connect(source_nodes, target, serialize.conn(conn_spec), serialize.syn(syn_spec))
-          else:
-            for idx in range(len(tgt_idx)):
-              target = np.array(target_nodes)[tgt_idx[idx]].tolist()
-              if 'src_idx' in connectome:
-                src_idx = connectome['src_idx']
-                source = np.array(source_nodes)[src_idx[idx]].tolist()
-              else:
-                source = [source_nodes[idx]]
-              nest.Connect(source, target, serialize.conn(conn_spec), serialize.syn(syn_spec))
-      else:
-        nest.Connect(source_nodes, target_nodes, serialize.conn(conn_spec), serialize.syn(syn_spec))
-      # NEST 3
-      # nest.Connect(source_obj, target_obj, serialize.conn(conn_spec), serialize.syn(syn_spec))
+      nest.Connect(source_obj, target_obj, conn_spec, syn_spec)
 
   logs.append(log('Start simulation'))
   nest.Simulate(float(simtime))
@@ -163,16 +155,16 @@ def run(data):
   for idx, record in enumerate(records):
     records[idx]['idx'] = idx
     if record['recorder']['model'] == 'spike_detector':
-      neuron, rec = 'source', 'target'
+      neuron, recorder = 'source', 'target'
     else:
-      rec, neuron = 'source', 'target'
+      recorder, neuron = 'source', 'target'
     global_ids = []
-    for connectome in connectomes:
-      if connectome[rec] == record['recorder']['idx']:
-        collection = collections[connectome[neuron]]
-        global_ids.extend(collection['global_ids'])
+    for connection in connections:
+      if connection[recorder] == record['recorder']['idx']:
+        node = nodes[connection[neuron]]
+        global_ids.extend(node['global_ids'])
       records[idx]['global_ids'] = global_ids
-      recorder_obj = collections_obj[record['recorder']['idx']]
+      recorder_obj = nodes_obj[record['recorder']['idx']]
       events = serialize.events(recorder_obj, ndigits)
       records[idx]['events'] = events
       records[idx]['senders'] = list(set(events['senders']))

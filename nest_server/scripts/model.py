@@ -10,9 +10,9 @@ __all__ = [
 ]
 
 root_path = '/tmp'
-models_path = os.path.join(root_path, 'models')
-build_path = os.path.join(root_path, 'models-build')
-nest_install_dir = '/home/spreizer/opt/nest-simulator'
+models_path = os.path.join(root_path, 'nest-models')
+build_path = os.path.join(root_path, 'nest-models-build')
+nest_install_dir = '/home/spreizer/opt/nest-3'
 
 
 def bashCommand(command):

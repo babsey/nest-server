@@ -16,7 +16,7 @@ def api_client(request, call, data, *args, **kwargs):
 
         if str(kwargs.get('return_doc', 'false')) == 'true':
             response = call.__doc__
-        if str(kwargs.get('return_source', 'false')) == 'true':
+        elif str(kwargs.get('return_source', 'false')) == 'true':
             response = inspect.getsource(call)
         else:
             if call.__name__ == 'SetKernelStatus':
@@ -27,10 +27,11 @@ def api_client(request, call, data, *args, **kwargs):
                 status = nest.GetStatus(kwargs['nodes'])
                 for paramKey, paramVal in kwargs['params'].items():
                     kwargs['params'][paramKey] = type(status[paramKey])(paramVal)
-            response = call(*args, **kwargs)
+            response = nest.hl_api.serializable(call(*args, **kwargs))
     else:
         response = call
 
     data['response']['data'] = response
+    print(response)
 
     return data
