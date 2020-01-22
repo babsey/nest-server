@@ -3,12 +3,12 @@
 HOST="127.0.0.1"
 PORT=5000
 USER=$USER
-DAEMONIZE=0
+DAEMONIZE=1
 
 usage() {
   echo "NEST Server "`version`
   echo "-----------------"
-  echo "Usage: $0 log|status|start|stop|restart [-d] [-h <HOST>] [-p <PORT>] [-u <UID>]" >&2; exit 1
+  echo "Usage: $0 log|status|start|stop|restart [-o] [-h <HOST>] [-p <PORT>] [-u <UID>]" >&2; exit 1
 }
 
 log() {
@@ -38,16 +38,13 @@ start() {
   if [ "`ps-check`" ]; then
     echo "NEST Server is already serving at http://$HOST:$PORT."
   else
-    uwsgi --module nest_server.main:app --http-socket $HOST:$PORT --uid $USER --daemonize "/tmp/nest-server.log"
-    if [ "`ps-check`" ]; then
+    if [ $DAEMONIZE == 1 ]; then
+      uwsgi --module nest_server.main:app --http-socket $HOST:$PORT --uid $USER --daemonize "/tmp/nest-server.log"
       echo "NEST Server is serving at http://$HOST:$PORT."
-      if [ $DAEMONIZE == 0 ]; then
-        read -p "Press any key to stop... "
-        stop
-      fi
+      read -p "Press any key to stop... "
+      stop
     else
-      echo "Starting failed. The port already in use."
-      status
+      uwsgi --module nest_server.main:app --http-socket $HOST:$PORT --uid $USER
     fi
   fi
 }
@@ -71,10 +68,10 @@ version() {
 }
 
 CMD=$1; shift
-while getopts "dh:p:u:" opt; do
+while getopts "h:op:u:" opt; do
     case $opt in
-        d) DAEMONIZE=1 ;;
         h) HOST=$OPTARG ;;
+        o) DAEMONIZE=0 ;;
         p) PORT=$OPTARG ;;
         u) USER=$OPTARG ;;
     esac
