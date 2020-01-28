@@ -4,6 +4,7 @@ import nest.topology as tp
 import numpy as np
 
 from . import serialize
+from . import restriction
 
 __all__ = [
     'run',
@@ -25,6 +26,7 @@ def log(message):
 
 def run(data):
   # print(data)
+  restriction.checkIfRestricted(data)
   logs = []
 
   logs.append(log('Get request'))
