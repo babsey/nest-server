@@ -1,0 +1,21 @@
+Bootstrap: docker
+From: nestsim/nest:3.0
+
+%labels
+  AUTHOR Sebastian Spreizer <spreizer@web.de>
+
+%post
+  apt-get update && apt-get install -y tzdata
+  apt update && apt install -y \
+  build-essential \
+  cmake \
+  cython3 \
+  libgsl-dev \
+  libltdl-dev \
+  libncurses5-dev \
+  libreadline-dev \
+  python3-all-dev \
+  python3-numpy \
+  python3-pip
+
+  pip3 install uwsgi flask flask-cors ipython jupyter nestml --upgrade
