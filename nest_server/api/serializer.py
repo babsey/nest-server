@@ -1,62 +1,36 @@
-import array
-import numpy as np
+import nest
+
 
 __all__ = [
     'serialize',
 ]
 
 
-SLILiterals = [
-    'element_type',
-    'model',
-    'record_from',
-    'record_to',
-    'recordables',
-    'synapse_model',
-    'type_id',
-]
-
-params_infinite = [
-    'V_min',
-    'alpha',
-]
+def NodeCollection(kwargs):
+    """ Get Node Collection as arguments for NEST functions.
+    """
+    keys = ['nodes', 'source', 'target', 'pre', 'post']
+    for key in keys:
+        if key in kwargs:
+            kwargs[key] = nest.NodeCollection(kwargs[key])
+    return kwargs
 
 
-def serialize(data, toFixed=False):
-
-  if type(data) in [array.array, np.ndarray]:
-    data = data.tolist()
-
-  if isinstance(data, list) or isinstance(data, tuple):
-    data = [serialize(d) for d in data]
-    data.sort()
-
-  elif isinstance(data, dict):
-    for key, value in data.items():
-
-      if key in SLILiterals:
-        if isinstance(value, tuple):
-          data[key] = [d.name for d in data[key]]
-        else:
-          data[key] = value.name
-
-      elif key == 'events':
-        for ekey, event in value.items():
-          if type(event) is np.ndarray:
-            data[key][ekey] = event.tolist()
-
-      elif toFixed:
-        data[key] = str(data[key])
-
-      elif type(value) is np.ndarray:
-        data[key] = value.tolist()
-
-      elif key in params_infinite:
-        if np.isinf(value):
-          data[key] = str(value)
-
-      elif isinstance(value, tuple) and len(value) > 0:
-        if isinstance(value[0], tuple) and len(value[0]) > 0:
-          data[key] = [[j.tolist() for j in i] for i in value]
-
-  return data
+def serialize(call, kwargs):
+    """ Serialize arguments with keywords for call functions in NEST.
+    """
+    kwargs = NodeCollection(kwargs)
+    if call.startswith('Set'):
+        status = {}
+        if call == 'SetDefaults':
+            status = nest.GetDefaults(kwargs['model'])
+        elif call == 'SetKernelStatus':
+            status = nest.GetKernelStatus()
+        elif call == 'SetStructuralPlasticityStatus':
+            status = nest.GetStructuralPlasticityStatus(kwargs['params'])
+        elif call == 'SetStatus':
+            status = nest.GetStatus(kwargs['nodes'])
+        for key, val in kwargs['params'].items():
+            if key in status:
+                kwargs['params'][key] = type(status[key])(val)
+    return kwargs
