@@ -4,31 +4,10 @@ import nest
 
 from . import serialize
 
+
 __all__ = [
     'run',
 ]
-
-
-def getPositions(node):
-  if 'spatial' in node:
-    spatial = node['spatial']
-    if ('positions' in spatial):
-      specs = {
-          'positions': spatial['positions'],
-          'extent': spatial.get('extent', None),
-          'edge_wrap': spatial.get('edge_wrap', False),
-          'num_dimension': spatial.get('num_dimension', None),
-      }
-      return nest.spatial.free(**specs)
-    else:
-      specs = {
-          'shape': spatial['shape'],
-          'center': spatial.get('center', None),
-          'extent': spatial.get('extent', None),
-          'edge_wrap': spatial.get('edge_wrap', False)
-      }
-      return nest.spatial.grid(**specs)
-  return None
 
 
 def log(message):
@@ -44,13 +23,20 @@ def run(data):
   simtime = data.get('time', 1000.0)
   kernel = data.get('kernel', {})
   models = data['models']
-  nodes = data['collections']
-  connections = data['connectomes']
+  nodes = data['nodes']
+  connections = data['connections']
   records = []
   nodes_obj = []
 
   logs.append(log('Reset kernel'))
   nest.ResetKernel()
+
+  try:
+    print('Module install')
+    nest.Install("nestmlmodule")
+  except:
+    print('Module install error')
+    pass
 
   logs.append(log('Set seed in numpy random'))
   np.random.seed(int(data.get('random_seed', 0)))
@@ -92,27 +78,21 @@ def run(data):
 
   logs.append(log('Copy models'))
   for new, model in models.items():
-    params_serialized = serialize.model_params(model['existing'], model['params'])
-    nest.CopyModel(model['existing'], new, params_serialized)
+    model['new'] = new
+    existing, new, params = serialize.model(model)
+    nest.CopyModel(existing, new, params)
 
   logs.append(log('Create nodes'))
   for idx, node in enumerate(nodes):
     nodes[idx]['idx'] = idx
-    n = int(node.get('n', 1))
-    positions = getPositions(node)
-    node_obj = nest.Create(node['model'], n, positions=positions)
+    model, n, params, positions = serialize.node(node)
+    node_obj = nest.Create(model, n, params, positions)
     nodes[idx]['global_ids'] = node_obj.tolist()
-    if positions:
-      positions = nest.GetPosition(obj)
-      positions = np.round(positions, decimals=2).astype(float)
-      nodes[idx]['spatial']['positions'] = positions.tolist()
-      nodes[idx]['n'] = positions.shape[0]
-      nodes[idx]['ndim'] = positions.ndim
     if node['element_type'] == 'recorder':
       model = models[node['model']]
       record = {
           'recorder': {
-              'global_ids': list(obj),
+              'global_ids': node_obj.tolist(),
               'idx': idx,
               'model': model['existing']
           }
@@ -120,14 +100,13 @@ def run(data):
       if 'record_from' in model['params']:
         record['record_from'] = model['params']['record_from']
       records.append(record)
-    nodes_obj.append(obj)
+    nodes_obj.append(node_obj)
 
   logs.append(log('Connect nodes'))
   for connection in connections:
     source_obj = nodes_obj[connection['source']]
     target_obj = nodes_obj[connection['target']]
-    conn_spec = serialize.conn(connection.get('conn_spec', 'all_to_all'))
-    syn_spec = serialize.syn(connection.get('syn_spec', 'static_synapse'))
+    conn_spec, syn_spec = serialize.connection(connection)
     if 'tgt_idx' in connection:
       tgt_idx = connection['tgt_idx']
       if len(tgt_idx) > 0:
@@ -151,7 +130,6 @@ def run(data):
   data['kernel']['time'] = nest.GetKernelStatus('time')
 
   logs.append(log('Serialize recording data'))
-  ndigits = int(-1 * np.log10(resolution))
   for idx, record in enumerate(records):
     records[idx]['idx'] = idx
     if record['recorder']['model'] == 'spike_detector':
@@ -159,15 +137,22 @@ def run(data):
     else:
       recorder, neuron = 'source', 'target'
     global_ids = []
+    positions = []
     for connection in connections:
       if connection[recorder] == record['recorder']['idx']:
         node = nodes[connection[neuron]]
         global_ids.extend(node['global_ids'])
-      records[idx]['global_ids'] = global_ids
-      recorder_obj = nodes_obj[record['recorder']['idx']]
-      events = serialize.events(recorder_obj, ndigits)
-      records[idx]['events'] = events
-      records[idx]['senders'] = list(set(events['senders']))
+        if 'positions' in node:
+          node_obj = nodes_obj[node['idx']]
+          pos = nest.GetPosition(node_obj)
+          pos = np.round(pos, decimals=2).astype(float)
+          positions.extend(pos.tolist())
+    records[idx]['global_ids'] = global_ids
+    records[idx]['positions'] = positions
+    recorder_obj = nodes_obj[record['recorder']['idx']]
+    events = serialize.events(recorder_obj)
+    records[idx]['events'] = events
+    records[idx]['senders'] = list(set(events['senders']))
   data['records'] = records
 
   return {'data': data, 'logs': logs}

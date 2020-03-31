@@ -2,124 +2,157 @@ import nest
 import numpy as np
 
 __all__ = [
-    'model_params',
-    'parameter',
-    'conn',
-    'syn',
+    'model',
+    'node',
+    'connection',
     'events',
-    'layer',
-    # 'projections',
 ]
 
 
-def _paramify(params, param_defaults):
+# -----
+# Model
+# -----
+
+
+def _model_paramify(params, defaults):
   _params = {}
   for pkey, pval in params.items():
     if pkey == 'model':
       _params[pkey] = pval
     elif isinstance(pval, dict):
-      _params[pkey] = _paramify(pval, param_defaults[pkey])
-    elif pkey in param_defaults:
-      ptype = type(param_defaults[pkey])
-      if ptype == np.ndarray:
-        _params[pkey] = np.array(
-            pval, dtype=param_defaults[pkey].dtype)
+      _params[pkey] = _model_paramify(pval, defaults[pkey])
+    elif pkey in defaults:
+      if isinstance(defaults[pkey], np.ndarray):
+        _params[pkey] = np.array(pval, dtype = defaults[pkey].dtype)
       else:
+        ptype = type(defaults[pkey])
         _params[pkey] = ptype(pval)
   return _params
 
 
-def model_params(model, params):
-  if len(params) == 0:
-    return {}
-  param_defaults = nest.GetDefaults(model)
-  return _paramify(params, param_defaults)
+def _model_params(spec):
+  if 'params' not in spec:
+    return None
+  if len(spec['params']) == 0:
+    return None
+  model_defaults = nest.GetDefaults(spec['existing'])
+  return _model_paramify(spec['params'], model_defaults)
 
 
-def parameter(specs):
-  if isinstance(specs, dict):
-    specs['specs'] = dict([(key, float(val)) for (key, val) in specs['specs'].items()])
-    return tp.CreateParameter(**specs)
+def model(spec):
+  return spec['existing'], spec['new'], _model_params(spec)
+
+
+# ----
+# Node
+# ----
+
+
+def _n(spec):
+  if ('positions' not in spec):
+    return int(spec.get('n', 1))
+  if (spec['positions'] != None):
+    return int(spec.get('n', 1))
+  if 'spatial' in spec['positions']:
+    if 'free' in spec['positions']['spatial']:
+      return int(spec.get('n', 1))
+  return 1
+
+
+def _parse_float(spec):
+  return dict([(key, float(val)) for (key, val) in spec.items()])
+
+
+def _create_parameter(param):
+  if isinstance(param, dict):
+    param['specs'] = _parse_float(param['specs'])
+    return nest.CreateParameter(**param)
   else:
-    return float(specs)
+    return float(param)
 
 
-def conn(specs):
-  if isinstance(specs, str):
-    return specs
-  if len(specs) == 0:
-    return 'all_to_all'
-  return specs
+def _node_params(spec):
+  if 'params' not in spec:
+    return None
+  if len(spec['params']) == 0:
+    return None
+  params = dict([(key, _create_parameter(val)) for (key, val) in spec['params'].items()])
+  return params
 
 
-def syn(specs):
-  if isinstance(specs, str):
-    return specs
-  if len(specs) == 0:
-    return 'static_synapse'
-  spec_defaults = nest.GetDefaults(specs.get('model', 'static_synapse'))
-  return _paramify(specs, spec_defaults)
+def _positions(spec):
+  if 'positions' in spec:
+    positions = spec['positions']
+    if isinstance(positions, list):
+      pos = np.array(positions, dtype=float).tolist()
+      return nest.spatial.free(pos)
+    elif isinstance(positions, dict):
+      if positions['spatial'] == 'free':
+        pos = positions['pos']
+        if isinstance(pos, list):
+          pos = np.array(pos, dtype=float).tolist()
+        elif isinstance(pos, dict):
+          random_spec = pos['random_spec']
+          pos = nest.random.__dict__[pos['random']](**random_spec)
+        spatial_spec = {
+            'pos': pos,
+            'extent': positions.get('extent', None),
+            'edge_wrap': positions.get('edge_wrap', False),
+            'num_dimension': positions.get('num_dimension', None),
+        }
+      elif positions['spatial'] == 'grid':
+        spatial_spec = {
+            'shape': positions['shape'],
+            'center': positions.get('center', None),
+            'extent': positions.get('extent', None),
+            'edge_wrap': positions.get('edge_wrap', False),
+        }
+      return nest.spatial.__dict__[positions['spatial']](**spatial_spec)
+  return None
 
 
-def events(recId, ndigits=0):
+def node(spec):
+  return spec['model'], _n(spec), _node_params(spec), _positions(spec)
+
+
+# ----------
+# Connection
+# ----------
+
+
+def _conn_spec(spec):
+  conn_spec = spec.get('conn_spec', 'all_to_all')
+  if isinstance(conn_spec, str):
+    return conn_spec
+  if 'mask' in conn_spec:
+    mask = {}
+    mask[conn_spec['mask']['masktype']] = _parse_float(conn_spec['mask']['specs'])
+    conn_spec['mask'] = mask
+  # conn_spec['allow_autapses'] = bool(conn_spec.get('allow_autapses', True))
+  # conn_spec['allow_multapses'] = bool(conn_spec.get('allow_multapses', True))
+  return conn_spec
+
+
+def _syn_spec(spec):
+  syn_spec = spec.get('syn_spec', 'static_synapse')
+  if isinstance(syn_spec, str):
+    return syn_spec
+  synapse_model = syn_spec.get('synapse_model', 'static_synapse')
+  model_defaults = nest.GetDefaults(synapse_model)
+  return _model_paramify(syn_spec, model_defaults)
+
+
+def connection(spec):
+  return _conn_spec(spec), _syn_spec(spec)
+
+
+# --------
+# Recorder
+# --------
+
+
+def events(rec_obj):
   events = {}
-  for eventKey, eventVal in nest.GetStatus(recId, 'events')[0].items():
+  for eventKey, eventVal in rec_obj.get('events').items():
     events[eventKey] = eventVal.tolist()
   return events
-
-
-def layer(specs):
-  newSpecs = {'elements': specs['elements']}
-  newSpecs['center'] = np.round(specs['center'], decimals=2).astype(float).tolist()
-  newSpecs['extent'] = np.round(specs['extent'], decimals=2).astype(float).tolist()
-  if 'positions' in specs:
-    positions = np.round(specs['positions'], decimals=2).astype(float).tolist()
-    newSpecs['positions'] = positions
-  else:
-    newSpecs['rows'] = specs['rows']
-    newSpecs['columns'] = specs['columns']
-  return newSpecs
-
-
-def mask(masktype, specs):
-  if 'rectangular' in masktype:
-    newSpecs = {
-        'lower_left': np.array(specs['lower_left'], dtype=float).tolist(),
-        'upper_right': np.array(specs['upper_right'], dtype=float).tolist(),
-        'azimuth_angle': float(specs['azimuth_angle']),
-    }
-  elif 'circular' in masktype:
-    newSpecs = {
-        'radius': float(specs['radius'])
-    }
-  elif 'doughnut' in masktype:
-    newSpecs = {
-        'inner_radius': float(specs['inner_radius']),
-        'outer_radius': float(specs['outer_radius']),
-    }
-  elif 'elliptical' in masktype:
-    newSpecs = {
-        'major_axis': float(specs['major_axis']),
-        'minor_axis': float(specs['minor_axis']),
-        'azimuth_angle': float(specs['azimuth_angle']),
-        # 'anchor': np.array(specs['anchor']).tolist(),
-    }
-  else:
-    newSpecs = {}
-  return tp.CreateMask(masktype=masktype, specs=newSpecs)
-
-
-# def projections(specs):
-#   newSpecs = {}
-#   newSpecs['connection_type'] = specs.get('connection_type', 'divergent')
-#   if 'kernel' in specs:
-#     newSpecs['kernel'] = parameter(specs['kernel'])
-#   if 'number_of_connections' in specs:
-#     newSpecs['number_of_connections'] = int(specs['number_of_connections'])
-#   if 'mask' in specs:
-#     newSpecs['mask'] = mask(specs['mask']['masktype'], specs['mask']['specs'])
-#   newSpecs['allow_autapses'] = bool(specs.get('allow_autapses', True))
-#   newSpecs['allow_multapses'] = bool(specs.get('allow_multapses', True))
-#   newSpecs['weights'] = parameter(specs.get('weights', 1.))
-#   newSpecs['delays'] = parameter(specs.get('delay', 1.))
-#   return newSpecs
