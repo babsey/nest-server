@@ -1,4 +1,6 @@
-from .serializer import serialize
+from werkzeug.exceptions import abort
+from werkzeug.wrappers import Response
+
 
 __all__ = [
     'get_or_error',
@@ -6,23 +8,12 @@ __all__ = [
 
 
 def get_or_error(func):
+
   def func_wrapper(request, call, data, *args, **kwargs):
-
     try:
-      data = func(request, call, data, *args, **kwargs)
-
-      if 'data' not in data['response']:
-        return data
-
-      response = data['response']['data']
-      if response is not None:
-        data['response']['data'] = serialize(response, toFixed=False)
-      data['response']['status'] = 'ok'
-
+      return func(request, call, data, *args, **kwargs)
+    except nest.kernel.NESTError as e:
+      abort(Response(getattr(e, 'errormessage'), 500))
     except Exception as e:
-      data['response']['msg'] = str(e)
-      data['response']['status'] = 'error'
-
-    return data
-
+      abort(Response(str(e), 500))
   return func_wrapper

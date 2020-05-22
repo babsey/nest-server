@@ -10,6 +10,9 @@ from flask_cors import CORS, cross_origin
 import nest
 import nest.topology as topo
 
+from werkzeug.exceptions import abort
+from werkzeug.wrappers import Response
+
 from .api import initializer as api_init
 from .api.client import api_client
 from . import scripts
@@ -112,21 +115,11 @@ def script(filename, call):
     script = getattr(scripts, filename)
     func = getattr(script, call)
     response = func(request.get_json())
+    return jsonify(response)
   except nest.kernel.NESTError as e:
-    print(e)
-    error = {
-        'name': getattr(e, 'errorname'),
-        'message': getattr(e, 'errormessage').split(':')[-1]
-    }
-    response = {'error': error}
+    abort(Response(getattr(e, 'errormessage').split(':')[-1], 500))
   except Exception as e:
-    print(e)
-    error = {
-        'name': 'Error',
-        'message': str(e)
-    }
-    response = {'error': error}
-  return jsonify(response)
+    abort(Response(str(e), 500))
 
 
 @app.route('/source', methods=['GET'])
@@ -137,14 +130,9 @@ def inspect_files():
     response = {
         'source': source,
     }
+    return jsonify(response)
   except Exception as e:
-    print(e)
-    error = {
-        'name': 'Error',
-        'message': str(e)
-    }
-    response = {'error': error}
-  return jsonify(response)
+    abort(Response(str(e), 500))
 
 
 @app.route('/source/<filename>', methods=['GET'])
@@ -156,14 +144,9 @@ def inspect_script(filename):
     response = {
         'source': source,
     }
+    return jsonify(response)
   except Exception as e:
-    print(e)
-    error = {
-        'name': 'Error',
-        'message': str(e)
-    }
-    response = {'error': error}
-  return jsonify(response)
+    abort(Response(str(e), 500))
 
 
 @app.route('/source/<filename>/<call>', methods=['GET'])
@@ -176,14 +159,9 @@ def inspect_func(filename, call):
     response = {
         'source': source,
     }
+    return jsonify(response)
   except Exception as e:
-    print(e)
-    error = {
-        'name': 'Error',
-        'message': str(e)
-    }
-    response = {'error': error}
-  return jsonify(response)
+    abort(Response(str(e), 500))
 
 
 if __name__ == "__main__":
