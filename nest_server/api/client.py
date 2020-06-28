@@ -1,5 +1,6 @@
 import inspect
 import nest
+import numpy as np
 
 from .decorator import get_or_error
 
@@ -8,29 +9,44 @@ __all__ = [
 ]
 
 
+def serialize(call, args, kwargs):
+  """ Serialize arguments with keywords for call functions in NEST.
+  """
+  if call.__name__.startswith('Set'):
+    status = {}
+    if call.__name__ == 'SetDefaults':
+      status = nest.GetDefaults(kwargs['model'])
+    elif call.__name__ == 'SetKernelStatus':
+      status = nest.GetKernelStatus()
+    elif call.__name__ == 'SetStructuralPlasticityStatus':
+      status = nest.GetStructuralPlasticityStatus(kwargs['params'])
+    elif call.__name__ == 'SetStatus':
+      status = nest.GetStatus(kwargs['nodes'])
+    for key, val in kwargs['params'].items():
+      if key in status:
+        kwargs['params'][key] = type(status[key])(val)
+  return args, kwargs
+
+
 @get_or_error
-def api_client(request, call, data, *args, **kwargs):
-
+def api_client(call, args, kwargs):
+  """ API Client to call function in NEST.
+  """
   if callable(call):
-    data['request']['call'] = call.__name__
-
-    if str(kwargs.get('return_doc', 'false')) == 'true':
-      response = call.__doc__
-    if str(kwargs.get('return_source', 'false')) == 'true':
-      response = inspect.getsource(call)
+    if 'inspect' in kwargs:
+      response = {
+          'data': getattr(inspect, kwargs['inspect'])(call)
+      }
     else:
-      if call.__name__ == 'SetKernelStatus':
-        kernelStatus = nest.GetKernelStatus()
-        for paramKey, paramVal in kwargs['params'].items():
-          kwargs['params'][paramKey] = type(kernelStatus[paramKey])(paramVal)
-      elif call.__name__ == 'SetStatus':
-        status = nest.GetStatus(kwargs['nodes'])
-        for paramKey, paramVal in kwargs['params'].items():
-          kwargs['params'][paramKey] = type(status[paramKey])(paramVal)
+      args, kwargs = serialize(call, args, kwargs)
       response = call(*args, **kwargs)
   else:
     response = call
+  serialized_response = nest.hl_api.serializable(response)
 
-  data['response']['data'] = nest.hl_api.serializable(response)
+  if call == nest.GetDefaults:
+    for (key, value) in serialized_response.items():
+      if isinstance(value, float) and (np.isnan(value) or np.isinf(value)):
+        serialized_response[key] = str(value)
 
-  return data
+  return serialized_response
