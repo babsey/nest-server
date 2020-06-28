@@ -3,7 +3,6 @@ From: ubuntu:18.04
 
 %labels
   AUTHOR Sebastian Spreizer <spreizer@web.de>
-  VERSION 1.5.0
 
 %post
   apt-get update && apt-get install -y tzdata
@@ -28,7 +27,7 @@ From: ubuntu:18.04
   pip3 install uwsgi flask flask-cors ipython jupyter nestml --upgrade
 
 %apprun simulator_build
-  VERSION=2.18.0
+  VERSION=2.20.0
 
   cd /tmp/
   if [ ! -f "v$VERSION.tar.gz" ]; then
