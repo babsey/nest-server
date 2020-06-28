@@ -12,7 +12,7 @@ __all__ = [
 
 
 def getNodes(collection, meta):
-  if 'spatial' in meta:
+  if isSpatial(meta):
     nodes = nest.GetNodes(collection)[0]
   else:
     nodes = collection
@@ -22,6 +22,10 @@ def getNodes(collection, meta):
 def log(message):
   # print(message)
   return (str(datetime.datetime.now()), 'server', message)
+
+
+def isSpatial(node):
+    return len(node['spatial'].keys()) > 0
 
 
 def run(data):
@@ -62,7 +66,7 @@ def run(data):
     if model['existing'] != 'multimeter':
       continue
 
-    if 'record_from' in model['params']:
+    if 'record_from' in collection['params']:
       continue
 
     recs = list(filter(lambda conn: conn['source'] == idx, connectomes))
@@ -77,7 +81,7 @@ def run(data):
     assert len(recordable_models_set) == 1
 
     recordables = nest.GetDefaults(recordable_models_set[0], 'recordables')
-    model['params']['record_from'] = list(map(str, recordables))
+    collection['params']['record_from'] = list(map(str, recordables))
 
   logs.append(log('Copy models'))
   for new, model in models.items():
@@ -87,7 +91,7 @@ def run(data):
   logs.append(log('Create collections'))
   for idx, collection in enumerate(collections):
     collections[idx]['idx'] = idx
-    if 'spatial' in collection:
+    if isSpatial(collection):
       specs = collection['spatial']
       specs['elements'] = collection['model']
       obj = tp.CreateLayer(serialize.layer(specs))
@@ -102,20 +106,19 @@ def run(data):
       collections[idx]['global_ids'] = nest.GetNodes(obj)[0]
     else:
       n = int(collection.get('n', 1))
-      obj = nest.Create(collection['model'], n)
+      obj = nest.Create(collection['model'], n, collection.get('params', {}))
       collections[idx]['global_ids'] = list(obj)
-      if collection['element_type'] == 'recorder':
-        model = models[collection['model']]
+      element_type = nest.GetStatus(obj, 'element_type')[0]
+      if str(element_type) == 'recorder':
+        model = nest.GetDefaults(str(nest.GetStatus(obj, 'model')[0]), 'type_id')
         record = {
             'recorder': {
-                'global_ids': list(obj),
                 'idx': idx,
-                'model': model['existing']
+                'global_id': nest.GetStatus(obj, 'global_id')[0],
+                'model': model,
             }
         }
-        if 'record_from' in model['params']:
-          record['record_from'] = model['params']['record_from']
-        records.append(record)
+        records.append(nest.hl_api.serializable(record))
     collections_obj.append(obj)
 
   logs.append(log('Connect collections'))
@@ -124,7 +127,7 @@ def run(data):
     target = collections[connectome['target']]
     source_obj = collections_obj[connectome['source']]
     target_obj = collections_obj[connectome['target']]
-    if ('spatial' in source) and ('spatial' in target):
+    if isSpatial(source) and isSpatial(target):
       projections = connectome['projections']
       tp.ConnectLayers(source_obj, target_obj, serialize.projections(projections))
     else:
@@ -133,7 +136,7 @@ def run(data):
       # NEST 2.18
       source_nodes = getNodes(source_obj, source)
       target_nodes = getNodes(target_obj, target)
-      if 'tgt_idx' in connectome:
+      if (len(connectome.get('tgt_idx', [])) > 0 and len(connectome.get('src_idx', [])) > 0):
         tgt_idx = connectome['tgt_idx']
         if len(tgt_idx) > 0:
           if isinstance(tgt_idx[0], int):
@@ -143,8 +146,8 @@ def run(data):
           else:
             for idx in range(len(tgt_idx)):
               target = np.array(target_nodes)[tgt_idx[idx]].tolist()
-              if 'src_idx' in connectome:
-                src_idx = connectome['src_idx']
+              src_idx = connectome['src_idx']
+              if len(src_idx) > 0:
                 source = np.array(source_nodes)[src_idx[idx]].tolist()
               else:
                 source = [source_nodes[idx]]
@@ -169,15 +172,16 @@ def run(data):
     else:
       rec, neuron = 'source', 'target'
     global_ids = []
+    positions = []
     for connectome in connectomes:
       if connectome[rec] == record['recorder']['idx']:
         collection = collections[connectome[neuron]]
         global_ids.extend(collection['global_ids'])
-      records[idx]['global_ids'] = global_ids
-      recorder_obj = collections_obj[record['recorder']['idx']]
-      events = serialize.events(recorder_obj, ndigits)
-      records[idx]['events'] = events
-      records[idx]['senders'] = list(set(events['senders']))
-  data['records'] = records
-
+        if isSpatial(collection):
+          positions.extend(collection['spatial']['positions'])
+    recorder_obj = collections_obj[record['recorder']['idx']]
+    records[idx]['events'] = nest.GetStatus(recorder_obj, 'events')
+    records[idx]['global_ids'] = global_ids
+    records[idx]['positions'] = positions
+  data['records'] = nest.hl_api.serializable(records)
   return {'data': data, 'logs': logs}
