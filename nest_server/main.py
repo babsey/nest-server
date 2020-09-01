@@ -1,6 +1,5 @@
 import inspect
 import io
-import os
 import optparse
 from RestrictedPython import compile_restricted, safe_globals
 import sys
@@ -17,7 +16,7 @@ from werkzeug.wrappers import Response
 
 from .api.initializer import get_arguments
 from .api.client import api_client
-from .exec.helpers import clean_code, get_modules
+from .exec.helpers import Capturing, clean_code, get_globals
 from . import scripts
 
 from . import __version__
@@ -74,6 +73,7 @@ class Capturing(list):
     del self._stringio    # free up some memory
     sys.stdout = self._stdout
 
+
 @app.route('/exec', methods=['GET', 'POST'])
 @cross_origin()
 def route_exec():
@@ -83,22 +83,23 @@ def route_exec():
     args, kwargs = get_arguments(request)
     source_code = kwargs.get('source', '')
     source_cleaned = clean_code(source_code)
-    byte_code = compile_restricted(source_cleaned, '<inline>', 'exec')
-    locals = get_modules(source_code)
+
+    locals = dict()
+    response = dict()
     with Capturing() as stdout:
-      exec(byte_code, safe_globals, locals)
-    response = {
-        'stdout': '\n'.join(stdout),
-    }
+      exec(source_cleaned, get_globals(), locals)
+    if len(stdout) > 0:
+      response['stdout'] = '\n'.join(stdout)
     if 'return' in kwargs:
       if isinstance(kwargs['return'], list):
-        data = {}
+        data = dict()
         for variable in kwargs['return']:
           data[variable] = locals.get(variable, None)
       else:
         data = locals.get(kwargs['return'], None)
       response['data'] = nest.hl_api.serializable(data)
     return jsonify(response)
+
   except nest.kernel.NESTError as e:
       abort(Response(getattr(e, 'errormessage'), 400))
   except Exception as e:
@@ -109,37 +110,18 @@ def route_exec():
 # RESTful API
 # --------------------------
 
-@app.route('/api/nest', methods=['GET'])
-@app.route('/api/nest/', methods=['GET'])
+@app.route('/api', methods=['GET'])
+@app.route('/api/', methods=['GET'])
 @cross_origin()
 def router_nest():
   return jsonify(nest_calls)
 
 
-@app.route('/api/nest/<call>', methods=['GET', 'POST'])
+@app.route('/api/<call>', methods=['GET', 'POST'])
 @cross_origin()
 def router_nest_call(call):
   args, kwargs = get_arguments(request)
   call = getattr(nest, call)
-  response = api_client(call, args, kwargs)
-  return jsonify(response)
-
-
-@app.route('/api/topo', methods=['GET'])
-@app.route('/api/topo/', methods=['GET'])
-@app.route('/api/nest_topology', methods=['GET'])
-@app.route('/api/nest_topology/', methods=['GET'])
-@cross_origin()
-def router_topo():
-  return jsonify(topo_calls)
-
-
-@app.route('/api/topo/<call>', methods=['GET', 'POST'])
-@app.route('/api/nest_topology/<call>', methods=['GET', 'POST'])
-@cross_origin()
-def router_topo_call(call):
-  args, kwargs = get_arguments(request)
-  call = getattr(topo, call)
   response = api_client(call, args, kwargs)
   return jsonify(response)
 

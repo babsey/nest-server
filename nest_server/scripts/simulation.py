@@ -188,7 +188,7 @@ def run(data):
     recorder_obj = nodes_obj[record['recorder']['idx']]
 
     activity = {
-      'events': nest.GetStatus(recorder_obj, 'events'),
+      'events': nest.GetStatus(recorder_obj, 'events')[0],
       'nodeIds': nodeIds,
       'nodePositions': nodePositions,
     }
