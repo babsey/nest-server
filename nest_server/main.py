@@ -142,6 +142,7 @@ def script(filename, call):
   except nest.kernel.NESTError as e:
     abort(Response(getattr(e, 'errormessage').split(':')[-1], 400))
   except Exception as e:
+    print(e)
     abort(Response(str(e), 400))
 
 
@@ -155,6 +156,7 @@ def inspect_files():
     }
     return jsonify(response)
   except Exception as e:
+    print(e)
     abort(Response(str(e), 400))
 
 
@@ -169,6 +171,7 @@ def inspect_script(filename):
     }
     return jsonify(response)
   except Exception as e:
+    print(e)
     abort(Response(str(e), 400))
 
 
@@ -184,6 +187,7 @@ def inspect_func(filename, call):
     }
     return jsonify(response)
   except Exception as e:
+    print(e)
     abort(Response(str(e), 400))
 
 

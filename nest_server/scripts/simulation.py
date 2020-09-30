@@ -109,6 +109,7 @@ def run(data):
         positions = specs['positions']
       else:
         positions = tp.GetPosition(get_nodes(obj))
+        specs['positions'] = positions
       positions = np.round(positions, decimals=2).astype(float)
     else:
       n = int(node.get('n', 1))
@@ -185,6 +186,7 @@ def run(data):
         nodeIds.extend(list(get_nodes(nodes_obj[connection[neuron]])))
         if is_spatial(node):
           nodePositions.extend(node['spatial']['positions'])
+
     recorder_obj = nodes_obj[record['recorder']['idx']]
 
     activity = {
