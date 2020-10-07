@@ -101,10 +101,12 @@ def run(data):
   logs.append(log('Create nodes'))
   for idx, node in enumerate(nodes):
     # nodes[idx]['idx'] = idx
+    params_serialized = serialize.model_params(node['model'], node['params'])
     if is_spatial(node):
       specs = node['spatial']
       specs['elements'] = node['model']
       obj = tp.CreateLayer(serialize.layer(specs))
+      nest.SetStatus(nest.GetNodes(obj)[0], params_serialized)
       if 'positions' in specs:
         positions = specs['positions']
       else:
@@ -113,7 +115,6 @@ def run(data):
       positions = np.round(positions, decimals=2).astype(float)
     else:
       n = int(node.get('n', 1))
-      params_serialized = serialize.model_params(node['model'], node['params'])
       obj = nest.Create(node['model'], n, params_serialized)
       element_type = nest.GetStatus(obj, 'element_type')[0]
       if str(element_type) == 'recorder':
