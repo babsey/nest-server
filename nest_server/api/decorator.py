@@ -1,3 +1,5 @@
+import nest
+
 from werkzeug.exceptions import abort
 from werkzeug.wrappers import Response
 
@@ -13,7 +15,7 @@ def get_or_error(func):
     try:
       return func(request, call, data, *args, **kwargs)
     except nest.kernel.NESTError as e:
-      abort(Response(getattr(e, 'errormessage'), 500))
+      abort(Response(getattr(e, 'errormessage'), 400))
     except Exception as e:
-      abort(Response(str(e), 500))
+      abort(Response(str(e), 400))
   return func_wrapper

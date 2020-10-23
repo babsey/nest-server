@@ -1,5 +1,5 @@
 Bootstrap: docker
-From: nestsim/nest:2.18.0
+From: nestsim/nest:2.20.0
 
 %labels
   AUTHOR Sebastian Spreizer <spreizer@web.de>

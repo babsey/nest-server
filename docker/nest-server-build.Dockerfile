@@ -1,5 +1,5 @@
 ### STAGE 1: Build NEST ###
-FROM ubuntu:18.04 as nest-builder
+FROM ubuntu:20.04 as nest-builder
 LABEL maintainer="Sebastian Spreizer <spreizer@web.de>"
 
 RUN apt-get update && apt-get install -y \
@@ -16,7 +16,7 @@ RUN apt-get update && apt-get install -y \
 
 # install 'nest simulator'
 WORKDIR /tmp
-RUN VERSION=2.18.0 && \
+RUN VERSION=2.20.0 && \
     wget -O nest-simulator-$VERSION.tar.gz https://github.com/nest/nest-simulator/archive/v$VERSION.tar.gz && \
     tar -zxf nest-simulator-$VERSION.tar.gz && \
     mkdir /tmp/nest-build && cd /tmp/nest-build && \
@@ -26,7 +26,7 @@ RUN VERSION=2.18.0 && \
 
 
 ### STAGE 2: Setup ###
-FROM ubuntu:18.04
+FROM ubuntu:20.04
 LABEL maintainer="Sebastian Spreizer <spreizer@web.de>"
 
 RUN apt-get update && apt-get install -y \

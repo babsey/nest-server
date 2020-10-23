@@ -24,5 +24,5 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
     ],
     python_requires=">=3.6",
-    install_requires=["numpy", "flask", "flask-cors", "uwsgi", "nestml"],
+    install_requires=["flask", "flask-cors", "nestml", "numpy", "RestrictedPython", "uwsgi"],
 )
