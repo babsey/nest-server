@@ -59,7 +59,7 @@ def run(data):
   nest.ResetKernel()
 
   logs.append(log('Set seed in numpy random'))
-  np.random.seed(int(data.get('random_seed', 0)))
+  np.random.seed(int(simulation.get('random_seed', 0)))
 
   logs.append(log('Set kernel status'))
   local_num_threads = int(kernel.get('local_num_threads', 1))
