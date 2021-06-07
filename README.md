@@ -4,31 +4,14 @@
 
 ![nest-logo](http://www.nest-simulator.org/wp-content/uploads/2015/03/nest_logo.png)
 
-### Introduction
+The NEST Server is integrated in NEST Simulator.
 
-NEST Server starts a server interacting with NEST Simulator.
-It can be installed on a local machine, on a remote machine (e.g. server, cloud, cluster computer, supercomputer)
-or in a session management (e.g. Docker, Singularity).
+  -> https://github.com/nest/nest-simulator/blob/master/pynest/nest/server/hl_api_server.py
 
-### Setup
+Thus, this repository is deprecated and is no longer maintained.
 
-To install NEST Server:
-```
-pip3 install nest-server
-```
+If you want to read documentation of NEST Server, please visit the page:
 
-### Usage
-
-To start NEST Server in terminal:
-```
-nest-server start [-h 127.0.0.1 -p 5000]
-```
-
-Alternatively, to start NEST Server in Python interface (e.g. IPython, Jupyter):
-Note: Flask 0.12.4 is working with this.
-```
-from nest_server import app
-app.run(host='127.0.0.1', port=5000)
-```
+  -> https://nest-simulator.readthedocs.io/en/latest/nest_server.html
 
 ### License [MIT](LICENSE)
