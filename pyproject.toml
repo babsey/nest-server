@@ -1,0 +1,53 @@
+[project]
+name = "nest-server"
+version = "3.10.0"
+description = "A server instance for NEST"
+readme = "README.md"
+requires-python = ">=3.10"
+license-files = ["LICENSE"]
+authors = [
+  {name = "Sebastian Spreizer", email = "spreizer@web.de"},
+]
+maintainers = [
+  {name = "Sebastian Spreizer", email = "spreizer@web.de"},
+]
+keywords = ["spiking neuronal networks", "simulation", "NEST", "NESTML", "Norse"]
+classifiers = [
+  # How mature is this project? Common values are
+  #   3 - Alpha
+  #   4 - Beta
+  #   5 - Production/Stable
+  "Development Status :: 3 - Production/Stable",
+
+  # Indicate who your project is intended for
+  "Intended Audience :: Education",
+  "Intended Audience :: Science/Research",
+
+  "Topic :: Education",
+  "Topic :: Scientific/Engineering",
+  "Topic :: Scientific/Engineering :: Mathematics",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+
+  # Specify the Python versions you support here.
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+]
+dependencies = [
+  "flask>=3.1",
+  "flask-cors>=6.0",
+  "gunicorn>=26.0",
+  "nest-simulator>=3.10",
+  "restrictedpython>=8.3",
+]
+
+[project.urls]
+homepage = "https://nest.github.io"
+repository = "https://github.com/nest/nest-server"
+documentation = "https://nest-simulator.readthedocs.io"
+
+[tool.setuptools]
+package-dir = {"nest_server" = "nest_server"}
+script-files = ["scripts/nest-server"]
