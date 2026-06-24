@@ -1,7 +1,7 @@
 [project]
 name = "nest-server"
 version = "3.10.0"
-description = "A server instance for NEST"
+description = "A server instance for NEST Simulator"
 readme = "README.md"
 requires-python = ">=3.10"
 license-files = ["LICENSE"]
