@@ -49,5 +49,4 @@ repository = "https://github.com/nest/nest-server"
 documentation = "https://nest-simulator.readthedocs.io"
 
 [tool.setuptools]
-package-dir = {"nest_server" = "nest_server"}
 script-files = ["scripts/nest-server"]
