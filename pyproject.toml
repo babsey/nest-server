@@ -54,3 +54,24 @@ script-files = ["scripts/nest-server"]
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}
+
+[tool.black]
+line-length = 120
+
+[tool.flake8]
+# This is ignored
+# see discussions around https://github.com/PyCQA/flake8/issues/234
+
+[tool.isort]
+atomic = true
+line_length = 120
+multi_line_output = 3
+profile = "black"
+skip_gitignore = true
+
+[dependency-groups]
+dev = [
+    "black[jupyter]>=26.5.1",
+    "isort>=8.0.1",
+    "ruff>=0.15.17",
+]
