@@ -23,11 +23,11 @@ import logging
 import os
 import time
 
+import nest
+import nest_server
+
 logger = logging.getLogger(__name__)
 logger.setLevel(os.getenv("NEST_SERVER_MPI_LOGGER_LEVEL", "INFO"))
-
-import nest
-import nest.server
 
 HOST = os.getenv("NEST_SERVER_HOST", "127.0.0.1")
 PORT = os.getenv("NEST_SERVER_PORT", "52425")
@@ -43,12 +43,12 @@ def log(call_name, msg):
 
 if rank == 0:
     logger.info("==> Starting NEST Server Master on rank 0")
-    nest.server.set_mpi_comm(comm)
-    nest.server.run_mpi_app(host=opt.get("--host", HOST), port=opt.get("--port", PORT))
+    nest_server.set_mpi_comm(comm)
+    nest_server.run_mpi_app(host=opt.get("--host", HOST), port=opt.get("--port", PORT))
 
 else:
     logger.info(f"==> Starting NEST Server Worker on rank {rank}")
-    nest.server.set_mpi_comm(comm)
+    nest_server.set_mpi_comm(comm)
 
     while True:
         log("spinwait", "waiting for call bcast")
@@ -61,9 +61,9 @@ else:
         args, kwargs = data
 
         if call_name == "exec":
-            response = nest.server.do_exec(args, kwargs)
+            response = nest_server.do_exec(args, kwargs)
         else:
-            call, args, kwargs = nest.server.nestify(call_name, args, kwargs)
+            call, args, kwargs = nest_server.nestify(call_name, args, kwargs)
             log(call_name, f"local call, args={args}, kwargs={kwargs}")
 
             # The following exception handler is useful if an error
