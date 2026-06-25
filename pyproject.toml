@@ -49,6 +49,14 @@ homepage = "https://github.com/nest/nest-server"
 repository = "https://github.com/nest/nest-server"
 documentation = "https://nest-simulator.readthedocs.io"
 
+[dependency-groups]
+dev = [
+    "black>=26.5.1",
+    "flake8>=7.3.0",
+    "isort>=8.0.1",
+    "pre-commit>=4.6.0",
+]
+
 [tool.setuptools]
 script-files = ["scripts/nest-server"]
 
@@ -68,11 +76,3 @@ line_length = 120
 multi_line_output = 3
 profile = "black"
 skip_gitignore = true
-
-[dependency-groups]
-dev = [
-    "black>=26.5.1",
-    "flake8>=7.3.0",
-    "isort>=8.0.1",
-    "pre-commit>=4.6.0",
-]
