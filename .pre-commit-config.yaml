@@ -12,7 +12,7 @@ repos:
     rev: 26.3.1
     hooks:
       - id: black
-        language_version: python3
+        files: ^src/  # Only run on files in src/
 
   - repo: https://github.com/PyCQA/isort
     rev: 8.0.1
