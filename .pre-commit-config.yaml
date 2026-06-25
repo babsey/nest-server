@@ -38,4 +38,4 @@ repos:
       # Run the formatter.
       - id: ruff-format
 
-files: "./src/supermam"
+files: "./src"
