@@ -19,3 +19,7 @@ flask-cors>=6.0
 gunicorn>=26.0
 nest-simulator>=3.10
 restrictedpython>=8.3
+
+# Uncomment next lines of packages for mpi:
+# docopt
+# mpi4py
