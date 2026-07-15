@@ -58,7 +58,7 @@ dev = [
 ]
 
 [tool.setuptools]
-script-files = ["scripts/nest-server"]
+script-files = ["scripts/nest-server", "scripts/nest-server-mpi"]
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}

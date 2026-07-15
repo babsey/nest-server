@@ -21,5 +21,5 @@ nest-simulator>=3.10
 restrictedpython>=8.3
 
 # Uncomment next lines of packages for mpi:
-# docopt
-# mpi4py
+docopt
+mpi4py
