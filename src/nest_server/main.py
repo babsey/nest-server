@@ -28,7 +28,6 @@ import os
 import sys
 import time
 import traceback
-from copy import deepcopy
 
 import flask
 import nest
@@ -247,7 +246,6 @@ def do_call(call_name, args=[], kwargs={}):
     if mpi_comm is not None:
         assert mpi_comm.Get_rank() == 0
 
-    if mpi_comm is not None:
         log(call_name, "sending call bcast")
         mpi_comm.bcast(call_name, root=0)
         data = (args, kwargs)
@@ -261,13 +259,14 @@ def do_call(call_name, args=[], kwargs={}):
         log(call_name, f"local call, args={args}, kwargs={kwargs}")
         master_response = call(*args, **kwargs)
 
-    response = [nest.serialize_data(master_response)]
     if mpi_comm is not None:
         log(call_name, "waiting for response gather")
-        response = mpi_comm.gather(response[0], root=0)
+        response = mpi_comm.gather(nest.serialize_data(master_response), root=0)
         log(call_name, f"received response gather, data={response}")
 
-    return combine(call_name, response)
+        return combine(response)
+
+    return master_response
 
 
 @app.route("/exec", methods=["GET", "POST"])
@@ -306,8 +305,7 @@ def route_api_call(call):
     print(f"\n{'=' * 40}\n", flush=True)
     args, kwargs = get_arguments(request)
     log("route_api_call", f"call={call}, args={args}, kwargs={kwargs}")
-    response = api_client(call, args, kwargs)
-    return jsonify(nest.serialize_data(response))
+    return jsonify(nest.serialize_data(api_client(call, args, kwargs)))
 
 
 # ----------------------
@@ -506,7 +504,7 @@ def nestify(call_name, args, kwargs):
     """Get the NEST API call and convert arguments if neccessary."""
 
     call = getattr(nest, call_name)
-    objectnames = ["nodes", "source", "target", "pre", "post"]
+    objectnames = ["nodes", "nodes_or_conns", "pre", "post", "source", "target"]
     paramKeys = list(inspect.signature(call).parameters.keys())
     args = [nest.NodeCollection(arg) if paramKeys[idx] in objectnames else arg for (idx, arg) in enumerate(args)]
     for key, value in kwargs.items():
@@ -522,15 +520,16 @@ def api_client(call_name, args, kwargs):
 
     call = getattr(nest, call_name)
 
-    if callable(call):
-        if "inspect" in kwargs:
-            response = {"data": getattr(inspect, kwargs["inspect"])(call)}
-        else:
-            response = do_call(call_name, args, kwargs)
-    else:
-        response = call
+    if not callable(call):
+        return call
 
-    return nest.serialize_data(response)
+    elif "inspect" in kwargs:
+        response = {"data": getattr(inspect, kwargs["inspect"])(call)}
+
+    else:
+        response = do_call(call_name, args, kwargs)
+
+    return response
 
 
 def set_mpi_comm(comm):
@@ -545,7 +544,7 @@ def run_mpi_app(host="127.0.0.1", port=52425):
     app.run(host=host, port=port, threaded=False)
 
 
-def combine(call_name, response):
+def combine(response):
     """Combine responses from different MPI processes.
 
     In a distributed scenario, each MPI process creates its own share
@@ -582,103 +581,50 @@ def combine(call_name, response):
         response will be those lists concatenated and flattened.
 
     """
-
-    if mpi_comm is None:
-        return response[0]
-
-    if all(v is None for v in response):
+    if response is None or len(response) == 0 or all(v is None for v in response):
         return None
 
-    # return the master response if all responses are known to be the same
-    if call_name in (
-        "exec",
-        "Create",
-        "GetDefaults",
-        "GetKernelStatus",
-        "SetKernelStatus",
-        "SetStatus",
-    ):
+    if len(response) == 1 or response[0] == response[1]:
         return response[0]
 
-    # return a single response if there is only one which is not None
-    filtered_response = list(filter(lambda x: x is not None, response))
-    if len(filtered_response) == 1:
-        return filtered_response[0]
+    # return the master response if all responses are known to be the same
+    if all(isinstance(v, (list, tuple)) for v in response):
+        return combine([v[0] for v in response])
 
     # return a single merged dictionary if there are many of them
-    if all(type(v[0]) is dict for v in response):
+    if all(isinstance(v, dict) for v in response):
         return merge_dicts(response)
-
-    # return a flattened list if the response only consists of lists
-    if all(type(v) is list for v in response):
-        return [item for lst in response for item in lst]
 
     log("combine()", f"ERROR: cannot combine response={response}")
     msg = "Cannot combine data because of unknown reason"
     raise Exception(msg)  # pylint: disable=W0719
 
 
-def merge_dicts(response):  # noqa: C901
-    """Merge status dictionaries of recorders
+def merge_dicts(data: list[dict]) -> dict:
+    """Merge dictionaries of the data.
 
-    This function runs through a zipped list and performs the following steps:
-      * sum up all n_events fields
-      * if recording to memory: merge the event dictionaries by joining all
-        contained arrays
-      * if recording to ascii: join filenames arrays
-      * take all other values directly from the device on the first process
+    This function merged list of dictionaries.
+
+    Parameters
+    ----------
+    data: list of dicts
+        merged dict
 
     """
 
-    result = []
+    merged = {}
+    for d in data:
+        for k, v in d.items():
+            if k not in merged:
+                merged[k] = v
 
-    for device_dicts in zip(*response):
-        # TODO: either stip fields like thread, vp, thread_local_id,
-        # and local or make them lists that contain the values from
-        # all dicts.
+            elif isinstance(v, list):
+                merged[k].extend(v)
 
-        element_type = device_dicts[0]["element_type"]
+            elif isinstance(v, dict):
+                merged[k] = {**merged[k], **v}
 
-        if element_type not in ("neuron", "recorder", "stimulator"):
-            msg = f'Cannot combine data of element with type "{element_type}".'
-            raise Exception(msg)  # pylint: disable=W0719
-
-        if element_type == "neuron":
-            tmp = list(filter(lambda status: status["local"], device_dicts))
-            assert len(tmp) == 1
-            result.append(tmp[0])
-
-        if element_type == "recorder":
-            tmp = deepcopy(device_dicts[0])
-            tmp["n_events"] = 0
-
-            for device_dict in device_dicts:
-                tmp["n_events"] += device_dict["n_events"]
-
-            record_to = tmp["record_to"]
-            if record_to not in ("ascii", "memory"):
-                msg = f'Cannot combine data when recording to "{record_to}".'
-                raise Exception(msg)  # pylint: disable=W0719
-
-            if record_to == "memory":
-                event_keys = tmp["events"].keys()
-                for key in event_keys:
-                    tmp["events"][key] = []
-                for device_dict in device_dicts:
-                    for key in event_keys:
-                        tmp["events"][key].extend(device_dict["events"][key])
-
-            if record_to == "ascii":
-                tmp["filenames"] = []
-                for device_dict in device_dicts:
-                    tmp["filenames"].extend(device_dict["filenames"])
-
-            result.append(tmp)
-
-        if element_type == "stimulator":
-            result.append(device_dicts[0])
-
-    return result
+    return merged
 
 
 if __name__ == "__main__":
