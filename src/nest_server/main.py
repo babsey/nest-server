@@ -420,7 +420,7 @@ def get_modules_from_env():
     modules = {}
     try:
         parsed = ast.iter_child_nodes(ast.parse(MODULES))
-    except SyntaxError, ValueError:
+    except [SyntaxError, ValueError]:
         raise SyntaxError("The NEST server module environment variables contains syntax errors.")
     for node in parsed:
         if isinstance(node, ast.Import):

@@ -36,7 +36,7 @@ log() {
 
 pid() {
   # Get process ID of instance on defined host and port.
-  pgrep -f "gunicorn nest_server.app --bind ${HOST}:${PORT}"
+  pgrep -f "gunicorn nest_server.main:app --bind ${HOST}:${PORT}"
 }
 
 declare -a GUNICORN_OPTS
@@ -62,13 +62,13 @@ start() {
     fi
 
     set-gunicorn_opts
-    exec gunicorn nest_server:app "${GUNICORN_OPTS[@]}"
+    exec gunicorn nest_server.main:app "${GUNICORN_OPTS[@]}"
   fi
 }
 
 status() {
   # List all processes of NEST Server.
-  PS_AUX="$(pgrep -af "gunicorn nest_server.app")"
+  PS_AUX="$(pgrep -af "gunicorn nest_server.main:app")"
   printf "PID\t\tHTTP-SOCKET\t\tLOGFILE\n"
   echo "${PS_AUX}" | head -n 1 | awk \
     '{ for(i=1;i<=NF;i++) {if ( i == 1 || i == 6 || i == 8 ) printf $i"\t\t"}; printf "\n" }'

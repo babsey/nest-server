@@ -24,7 +24,8 @@ import os
 import time
 
 import nest
-import nest_server
+
+import nest_server.main as nest_server
 
 logger = logging.getLogger(__name__)
 logger.setLevel(os.getenv("NEST_SERVER_MPI_LOGGER_LEVEL", "INFO"))
