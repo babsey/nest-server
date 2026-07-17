@@ -1,6 +1,10 @@
+import logging
+
 import pytest
 
 from nest_server.main import app as nest_server_app
+
+logger = logging.getLogger()
 
 
 @pytest.fixture
