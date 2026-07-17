@@ -1,35 +1,7 @@
-import logging
-
-import pytest
-
-from nest_server.main import app as nest_server_app
-
-logger = logging.getLogger()
+from app_test_client import app, client  # noqa: F401
 
 
-@pytest.fixture
-def app():
-    nest_server_app.config.update(
-        {
-            "TESTING": True,
-        }
-    )
-
-    # other setup can go here
-
-    yield nest_server_app
-
-    # clean up / reset resources here
-
-
-@pytest.fixture
-def client(app):
-    client = app.test_client()
-    client.get("/api/ResetKernel")
-    return client
-
-
-def test_api_create_node_then_set_param(client):
+def test_api_create_node_then_set_param(client):  # noqa: F811
     I_e = 376
 
     response = client.post("/api/Create", json={"model": "iaf_psc_alpha"})
@@ -44,7 +16,7 @@ def test_api_create_node_then_set_param(client):
     assert response.json == [I_e]
 
 
-def test_api_create_multiple_nodes_then_set_params(client):
+def test_api_create_multiple_nodes_then_set_params(client):  # noqa: F811
     I_e = 376
 
     response = client.post("/api/Create", json={"model": "iaf_psc_alpha", "n": 2})
@@ -59,7 +31,7 @@ def test_api_create_multiple_nodes_then_set_params(client):
     assert response.json == [I_e, I_e]
 
 
-def test_api_create_multiple_nodes_then_set_various_params(client):
+def test_api_create_multiple_nodes_then_set_various_params(client):  # noqa: F811
     I_e = [375, 376]
 
     response = client.post("/api/Create", json={"model": "iaf_psc_alpha", "n": 2})
