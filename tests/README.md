@@ -18,14 +18,12 @@ uv run --env-file .env --with pytest pytest
 
 ### Debugging tests
 
-Get Logger from logging
+Add debug log.
 ```
-import logging
-logger = logging.getLogger()
-```
+from app_test_client import logger
 
-Add debug breakpoint.
-```
+...
+
 logger.debug("Hello world")
 ```
 
