@@ -1,6 +1,3 @@
-from app_test_client import app, client  # noqa: F401
-
-
 def test_api_create_node_then_set_param(client):  # noqa: F811
     I_e = 376
 

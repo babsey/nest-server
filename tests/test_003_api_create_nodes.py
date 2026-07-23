@@ -1,7 +1,5 @@
 from random import randint
 
-from app_test_client import app, client  # noqa: F401
-
 size = randint(2, 10)
 
 

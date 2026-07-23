@@ -1,6 +1,3 @@
-from app_test_client import app, client  # noqa: F401
-
-
 def test_api_selfconnect_node(client):  # noqa: F811
     response = client.post("/api/Create", json={"model": "iaf_psc_alpha"})
     assert response.status_code == 200

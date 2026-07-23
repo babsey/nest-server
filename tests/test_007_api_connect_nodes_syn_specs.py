@@ -1,7 +1,5 @@
 from random import randint
 
-from app_test_client import app, client  # noqa: F401
-
 
 def test_api_selfconnect_static_synapse(client):  # noqa: F811
     response = client.post("/api/Create", json={"model": "iaf_psc_alpha"})
