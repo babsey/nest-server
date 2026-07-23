@@ -1,6 +1,3 @@
-from app_test_client import app, client  # noqa: F401
-
-
 def test_api_reset_kernel(client):  # noqa: F811
     assert client.get("/api/ResetKernel").status_code == 200
 
@@ -57,7 +54,7 @@ def test_api_set_kernel_resolution(client):  # noqa: F811
 
 
 def test_api_set_kernel_rng_seed(client):  # noqa: F811
-    rng_seed = 123456789
+    rng_seed = 1
 
     assert client.post("/api/SetKernelStatus", json={"params": {"rng_seed": rng_seed}}).status_code == 200
 

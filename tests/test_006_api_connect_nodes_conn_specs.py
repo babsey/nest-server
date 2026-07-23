@@ -1,9 +1,6 @@
 from random import randint
 
-from app_test_client import app, client, logger  # noqa: F401
-
 size = randint(2, 10)
-logger.info(f"Population size: {size}")
 
 
 def test_api_selfconnect_single_node_all_to_all(client):  # noqa: F811
