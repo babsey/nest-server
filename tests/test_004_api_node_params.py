@@ -25,6 +25,7 @@ def test_api_create_multiple_nodes_then_set_params(client):  # noqa: F811
     response = client.post("/api/GetStatus", json={"nodes_or_conns": node_ids, "keys": "I_e"})
     assert response.status_code == 200
     assert isinstance(response.json, list)
+    assert len(response.json) == 2
     assert response.json == [I_e, I_e]
 
 
@@ -40,4 +41,5 @@ def test_api_create_multiple_nodes_then_set_various_params(client):  # noqa: F81
     response = client.post("/api/GetStatus", json={"nodes_or_conns": node_ids, "keys": "I_e"})
     assert response.status_code == 200
     assert isinstance(response.json, list)
+    assert len(response.json) == 2
     assert response.json == I_e

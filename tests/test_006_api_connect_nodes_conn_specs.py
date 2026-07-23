@@ -8,7 +8,10 @@ def test_api_selfconnect_single_node_all_to_all(client):  # noqa: F811
     assert response.status_code == 200
     node_ids = response.json
 
-    response = client.post("/api/Connect", json={"pre": node_ids, "post": node_ids, "return_synapsecollection": True})
+    response = client.post(
+        "/api/Connect",
+        json={"pre": node_ids, "post": node_ids, "conn_spec": "all_to_all", "return_synapsecollection": True},
+    )
     assert response.status_code == 200
     assert isinstance(response.json, dict)
     assert isinstance(response.json["source"], int)
@@ -59,26 +62,7 @@ def test_api_selfconnect_one_to_one(client):  # noqa: F811
     assert response.status_code == 200
     assert isinstance(response.json, dict)
     assert isinstance(response.json["source"], list)
-    assert response.json["source"] == node_ids and response.json["target"] == node_ids
-
-
-def test_api_selfconnect_fixed_indegree(client):  # noqa: F811
-    response = client.post("/api/Create", json={"model": "iaf_psc_alpha", "n": size})
-    assert response.status_code == 200
-    node_ids = response.json
-
-    assert client.post(
-        "/api/Connect",
-        json={
-            "pre": node_ids,
-            "post": node_ids,
-            "conn_spec": {"rule": "fixed_indegree", "indegree": 1},
-            "return_synapsecollection": True,
-        },
-    )
-    assert response.status_code == 200
-    assert isinstance(response.json, list)  # BUG: Why is it responding as a list?
-    assert response.json == node_ids  # BUG: Why is it a list of NodeCollections?
+    assert response.json["source"] == response.json["target"] == node_ids
 
 
 def test_api_selfconnect_fixed_outdegree(client):  # noqa: F811
@@ -102,6 +86,26 @@ def test_api_selfconnect_fixed_outdegree(client):  # noqa: F811
     assert isinstance(response.json, dict)
     assert isinstance(response.json["source"], list)
     assert response.json["source"] == node_ids
+
+
+def test_api_selfconnect_fixed_indegree(client):  # noqa: F811
+    response = client.post("/api/Create", json={"model": "iaf_psc_alpha", "n": size})
+    assert response.status_code == 200
+    node_ids = response.json
+
+    response = client.post(
+        "/api/Connect",
+        json={
+            "pre": node_ids,
+            "post": node_ids,
+            "conn_spec": {"rule": "fixed_indegree", "indegree": 1},
+            "return_synapsecollection": True,
+        },
+    )
+    assert response.status_code == 200
+    assert isinstance(response.json, dict)
+    assert isinstance(response.json["target"], list)
+    assert all([(target_id in node_ids) for target_id in response.json["target"]])
 
 
 def test_api_selfconnect_fixed_total_number(client):  # noqa: F811
