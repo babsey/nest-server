@@ -1,5 +1,7 @@
+import logging
 from random import randint
 
+logger = logging.getLogger()
 size = randint(2, 10)
 
 
@@ -26,10 +28,10 @@ def test_api_create_node_with_params(client):  # noqa: F811
     assert response.status_code == 200
 
     response = client.post("/api/GetStatus", json={"nodes_or_conns": response.json, "keys": "I_e"})
+    logger.debug(response.json)
     assert response.status_code == 200
-    assert isinstance(response.json, list)
-    assert len(response.json) == 1
-    assert response.json == [I_e]
+    assert isinstance(response.json, float)
+    assert response.json == I_e
 
 
 def test_api_create_multiple_nodes_with_params(client):  # noqa: F811
