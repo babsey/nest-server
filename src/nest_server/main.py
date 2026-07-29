@@ -223,7 +223,7 @@ def log(call_name, msg):
     logger.debug(msg)
 
 
-def do_call(call_name, args=[], kwargs={}):
+def do_call(call_name, args=[], kwargs={}):  # noqa: C901
     """Call a PYNEST function or execute a script within the server.
 
     If the server is run serially (i.e., without MPI), this function
@@ -248,23 +248,53 @@ def do_call(call_name, args=[], kwargs={}):
 
         log(call_name, "sending call bcast")
         mpi_comm.bcast(call_name, root=0)
+
         data = (args, kwargs)
         log(call_name, f"sending data bcast, data={data}")
         mpi_comm.bcast(data, root=0)
+
+        # log(call_name, "sending bcast")
+        # mpi_comm.bcast((call_name, args, kwargs), root=0)
 
     if call_name == "exec":
         master_response = do_exec(args, kwargs)
     else:
         call, args, kwargs = nestify(call_name, args, kwargs)
         log(call_name, f"local call, args={args}, kwargs={kwargs}")
-        master_response = call(*args, **kwargs)
+
+        try:
+            if call_name == "GetStatus":
+                keys = kwargs.get("keys", None)
+                if len(args) >= 2:
+                    keys = args[1]
+
+                if keys:
+                    master_response = args[0].get(keys)
+                else:
+                    master_response = args[0].get()
+
+            elif call_name == "SetStatus":
+                params = kwargs.get("params", {})
+                if len(args) >= 2:
+                    params = args[1]
+                master_response = args[0].set(params)
+
+            else:
+                master_response = call(*args, **kwargs)
+            log("master response of call", master_response)
+
+        except Exception as e:
+            logger.error(f"Failed to execute call: {e}")
+            master_response = None
 
     if mpi_comm is not None:
         log(call_name, "waiting for response gather")
         response = mpi_comm.gather(nest.serialize_data(master_response), root=0)
         log(call_name, f"received response gather, data={response}")
 
-        return combine(response)
+        response = combine(response)
+        log("combined", response)
+        return response
 
     return master_response
 
@@ -502,14 +532,22 @@ def get_restricted_globals():
 
 def nestify(call_name, args, kwargs):
     """Get the NEST API call and convert arguments if neccessary."""
+    log("nestify", (args, kwargs))
 
     call = getattr(nest, call_name)
     objectnames = ["nodes", "nodes_or_conns", "pre", "post", "source", "target"]
     paramKeys = list(inspect.signature(call).parameters.keys())
     args = [nest.NodeCollection(arg) if paramKeys[idx] in objectnames else arg for (idx, arg) in enumerate(args)]
+
     for key, value in kwargs.items():
         if key in objectnames:
             kwargs[key] = nest.NodeCollection(value)
+
+        # if mpi_comm is not None:
+        #     if key == "params":
+        #         kwargs[key] = {k: mpi_comm.scatter(value, root=0) for (k, v) in value.items()}  # noqa: W505
+
+    log("nestified", (args, kwargs))
 
     return call, args, kwargs
 
@@ -581,6 +619,12 @@ def combine(response):
         response will be those lists concatenated and flattened.
 
     """
+    log("combine", response)
+
+    # Filter out None values from the list
+    response = [r for r in response if r is not None]
+
+    # Return None if response is None or all items of the list are None.
     if response is None or len(response) == 0 or all(v is None for v in response):
         return None
 
@@ -589,18 +633,21 @@ def combine(response):
 
     # return the master response if all responses are known to be the same
     if all(isinstance(v, (list, tuple)) for v in response):
-        return combine([v[0] for v in response])
+        # return combine([v[0] for v in response])
+        return [v_j for v_i in list(zip(*response)) for v_j in v_i if v_j is not None]
 
     # return a single merged dictionary if there are many of them
     if all(isinstance(v, dict) for v in response):
         return merge_dicts(response)
 
-    log("combine()", f"ERROR: cannot combine response={response}")
-    msg = "Cannot combine data because of unknown reason"
-    raise Exception(msg)  # pylint: disable=W0719
+    return response
+
+    # log("combine()", f"ERROR: cannot combine response={response}")
+    # msg = "Cannot combine data because of unknown reason"
+    # raise Exception(msg)  # pylint: disable=W0719
 
 
-def merge_dicts(data: list[dict]) -> dict:
+def merge_dicts(data: list[dict]) -> dict:  # noqa: C901
     """Merge dictionaries of the data.
 
     This function merged list of dictionaries.
@@ -612,17 +659,63 @@ def merge_dicts(data: list[dict]) -> dict:
 
     """
 
+    # Merge status of recorder
+    if all(["n_events" in d for d in data]):
+        new_data = {k: [] for k in data[0].keys()}
+        for d in data:
+            for k, v in d.items():
+                if isinstance(v, list):
+                    for idx, i in enumerate(v):
+                        if d["n_events"][idx] > 0:
+                            new_data[k].append(i)
+                elif d["n_events"] > 0:
+                    new_data[k].append(v)
+
+        if len(new_data["n_events"]) == 1:
+            new_data = {k: v[0] for k, v in new_data.items()}
+        return new_data
+
+    data = [d for d in data if d != {}]
+
+    if len(data) == 1:
+        return data[0]
+
     merged = {}
+
+    keys = [k for d in data for k in list(d.keys())]
+    value_types = {k: [] for k in keys}
     for d in data:
         for k, v in d.items():
+            value_types[k].append(type(v))
+
+    is_collection = "model" in keys or "synapse_model" in keys
+
+    for d in data:
+        for k, v in d.items():
+
             if k not in merged:
-                merged[k] = v
+                value_type = value_types.get(k, [])
+                if list in value_type or is_collection:
+                    if isinstance(v, list):
+                        merged[k] = v
+
+                    else:
+                        merged[k] = [v]
+
+                else:
+                    merged[k] = v
+
+            elif not isinstance(merged[k], list):
+                continue
 
             elif isinstance(v, list):
                 merged[k].extend(v)
 
             elif isinstance(v, dict):
                 merged[k] = {**merged[k], **v}
+
+            else:
+                merged[k].append(v)
 
     return merged
 
