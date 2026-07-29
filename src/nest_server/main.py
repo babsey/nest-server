@@ -264,20 +264,29 @@ def do_call(call_name, args=[], kwargs={}):  # noqa: C901
 
         try:
             if call_name == "GetStatus":
+                nodes_or_conns = kwargs.get("nodes_or_conns", [])
+                if len(args) >= 1:
+                    nodes_or_conns = args[0]
+
                 keys = kwargs.get("keys", None)
                 if len(args) >= 2:
                     keys = args[1]
 
                 if keys:
-                    master_response = args[0].get(keys)
+                    master_response = nodes_or_conns.get(keys)
                 else:
-                    master_response = args[0].get()
+                    master_response = nodes_or_conns.get()
 
             elif call_name == "SetStatus":
+                nodes_or_conns = kwargs.get("nodes_or_conns", [])
+                if len(args) >= 1:
+                    nodes_or_conns = args[0]
+
                 params = kwargs.get("params", {})
                 if len(args) >= 2:
                     params = args[1]
-                master_response = args[0].set(params)
+
+                master_response = nodes_or_conns.set(params)
 
             else:
                 master_response = call(*args, **kwargs)

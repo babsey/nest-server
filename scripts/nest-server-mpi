@@ -78,20 +78,25 @@ else:
             # the next call.
             try:
                 if call_name == "GetStatus":
+                    nodes_or_conns = kwargs.get("nodes_or_conns", args[0])
+
                     keys = kwargs.get("keys", None)
                     if len(args) >= 2:
                         keys = args[1]
 
                     if keys:
-                        response = args[0].get(keys)
+                        response = nodes_or_conns.get(keys)
                     else:
-                        response = args[0].get()
+                        response = nodes_or_conns.get()
 
                 elif call_name == "SetStatus":
+                    nodes_or_conns = kwargs.get("nodes_or_conns", args[0])
+
                     params = kwargs.get("params", {})
                     if len(args) >= 2:
                         params = args[1]
-                    response = args[0].set(params)
+
+                    response = nodes_or_conns.set(params)
 
                 else:
                     response = call(*args, **kwargs)
