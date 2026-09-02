@@ -59,14 +59,14 @@ def main():
         HOST = args.host
 
     if args.n:
-        N = args.n
+        NUM_PROCESSES = args.n
 
     if args.port:
         PORT = args.port
 
     if args.operation == "start":
         subprocess.run(
-            f"mpirun -n {N} {filepath} --host={HOST} --port={PORT}",
+            f"mpirun -n {NUM_PROCESSES} {filepath} --host={HOST} --port={PORT}",
             shell=True,
             executable="/bin/bash",
             check=True,

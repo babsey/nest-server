@@ -1,4 +1,16 @@
-# cli.py
+#!/usr/bin/env python3
+
+"""A MPI Server for the NEST Simulator.
+
+Usage:
+  nest-server-mpi -n N [--host HOST] [--port PORT] start
+
+Options:
+  --host HOST   use hostname/IP address HOST for server [default: 127.0.0.1]
+  --port PORT   use port PORT for opening the socket [default: 52425]
+"""
+
+# main.py
 #
 # This file is part of NEST.
 #
@@ -16,16 +28,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with NEST.  If not, see <http://www.gnu.org/licenses/>.
-
-"""A MPI Server for the NEST Simulator.
-
-Usage:
-  nest-server-mpi -n N [--host HOST] [--port PORT] start
-
-Options:
-  --host HOST   use hostname/IP address HOST for server [default: 127.0.0.1]
-  --port PORT   use port PORT for opening the socket [default: 52425]
-"""
 
 from docopt import docopt
 from mpi4py import MPI
