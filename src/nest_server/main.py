@@ -34,17 +34,13 @@ from flask import Flask, jsonify, request
 from flask.logging import default_handler
 from flask_cors import CORS
 
+from nest_server.helpers import get_boolean_environ
+
 # This ensures that the logging information shows up in the console running
 # the server, even when Flask's event loop is running.
 logger = logging.getLogger()
 logger.addHandler(default_handler)
 logger.setLevel(os.getenv("NEST_SERVER_MPI_LOGGER_LEVEL", "INFO"))
-
-
-def get_boolean_environ(env_key, default_value="false"):
-    env_value = os.environ.get(env_key, default_value)
-    return env_value.lower() in ["yes", "true", "t", "1"]
-
 
 _default_origins = "http://localhost:*,http://127.0.0.1:*"
 ACCESS_TOKEN = os.environ.get("NEST_SERVER_ACCESS_TOKEN", "")

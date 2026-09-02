@@ -17,7 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with NEST.  If not, see <http://www.gnu.org/licenses/>.
 
-
 import argparse
 import os
 import subprocess
@@ -27,15 +26,16 @@ from pathlib import Path
 from gunicorn.app.wsgiapp import WSGIApplication
 
 from nest_server import __version__
+from nest_server.helpers import get_boolean_environ
 
 truthy_values = ("1", "t", "true", "y", "yes")
 
-DAEMON = os.getenv("NEST_SERVER_DAEMON", "False").lower() in truthy_values
+DAEMON = get_boolean_environ("NEST_SERVER_DAEMON")
 HOST = os.getenv("NEST_SERVER_HOST", "127.0.0.1")
 LOGFILE = os.getenv("NEST_SERVER_LOGFILE", "/tmp/nest-server.log")
 PIDFILE = os.getenv("NEST_SERVER_PIDFILE", "/tmp/nest-server.pid")
 PORT = int(os.getenv("NEST_SERVER_PORT", "52425"))
-STDOUT = os.getenv("NEST_SERVER_STDOUT", "False").lower() in truthy_values
+STDOUT = get_boolean_environ("NEST_SERVER_STDOUT")
 TIMEOUT = int(os.getenv("NEST_SERVER_TIMEOUT", "30"))
 WORKERS = int(os.getenv("NEST_SERVER_WORKERS", "1"))
 
@@ -65,10 +65,15 @@ class StandaloneApplication(WSGIApplication):
 def main():
     global DAEMON, HOST, PORT, STDOUT, WORKERS
 
-    parser = argparse.ArgumentParser(description="NEST Server Instance for NEST Simulator", add_help=False)
+    parser = argparse.ArgumentParser(description="A Python-based API server for the NEST Simulator", add_help=False)
     parser.add_argument("operation", choices=["log", "pid", "start", "stop", "version"])
 
-    parser.add_argument("-d", "--daemon", action="store_true", help="daemonize the server process")
+    parser.add_argument(
+        "-d",
+        "--daemon",
+        action="store_true",
+        help="run NEST Server in the background, i.e. daemonize the server process",
+    )
     parser.add_argument(
         "-h", "--host", type=str, help="use hostname/IP address <HOST> for the server [default: 127.0.0.1]"
     )
