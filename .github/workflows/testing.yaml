@@ -6,7 +6,7 @@ on:
     branches: [main]
 
 jobs:
-  install:
+  setup-uv:
     runs-on: ubuntu-latest
     env:
       UV_CACHE_DIR: /tmp/.uv-cache
@@ -27,7 +27,7 @@ jobs:
 
   lint:
     runs-on: ubuntu-latest
-    needs: [install]
+    needs: [setup-uv]
     env:
       UV_CACHE_DIR: /tmp/.uv-cache
 
@@ -45,9 +45,12 @@ jobs:
       - name: Check code lints with Ruff
         run: make lint
 
+      - name: Minimize uv cache
+        run: uv cache prune --ci
+
   format:
     runs-on: ubuntu-latest
-    needs: [install]
+    needs: [setup-uv]
     env:
       UV_CACHE_DIR: /tmp/.uv-cache
 
@@ -64,6 +67,9 @@ jobs:
 
       - name: Check code formats with Ruff
         run: make format
+
+      - name: Minimize uv cache
+        run: uv cache prune --ci
 
   pytest-cov:
     runs-on: ubuntu-latest
@@ -85,6 +91,9 @@ jobs:
       - name: Run pytest with coverage
         run: make test-cov
 
+      - name: Minimize uv cache
+        run: uv cache prune --ci
+
   pytest-all:
     runs-on: ubuntu-latest
     needs: [lint, format]
@@ -104,3 +113,6 @@ jobs:
 
       - name: Run pytest for multiple python versions
         run: make test-all
+
+      - name: Minimize uv cache
+        run: uv cache prune --ci
