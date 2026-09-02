@@ -1,13 +1,28 @@
-#!/usr/bin/env python3
+# cli.py
+#
+# This file is part of NEST.
+#
+# Copyright (C) 2004 The NEST Initiative
+#
+# NEST is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 2 of the License, or
+# (at your option) any later version.
+#
+# NEST is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with NEST.  If not, see <http://www.gnu.org/licenses/>.
 
-"""NEST Server with MPI support.
+"""A MPI Server for the NEST Simulator.
 
 Usage:
-  nest-server-mpi --help
-  mpirun -np N nest-server-mpi [--host HOST] [--port PORT]
+  nest-server-mpi -n N [--host HOST] [--port PORT] start
 
 Options:
-  -h --help     display usage information and exit
   --host HOST   use hostname/IP address HOST for server [default: 127.0.0.1]
   --port PORT   use port PORT for opening the socket [default: 52425]
 """
@@ -23,15 +38,16 @@ import os
 import time
 
 import nest
+from flask.logging import default_handler
 
 import nest_server.main as nest_server
 
-LOGGER_LEVEL = os.getenv("NEST_SERVER_MPI_LOGGER_LEVEL", "INFO")
+logger = logging.getLogger(__name__)
+logger.addHandler(default_handler)
+logger.setLevel(os.getenv("NEST_SERVER_MPI_LOGGER_LEVEL", "INFO"))
+
 HOST = os.getenv("NEST_SERVER_HOST", "127.0.0.1")
 PORT = os.getenv("NEST_SERVER_PORT", "52425")
-
-logger = logging.getLogger(__name__)
-logger.setLevel(LOGGER_LEVEL)
 
 comm = MPI.COMM_WORLD.Clone()
 rank = comm.Get_rank()

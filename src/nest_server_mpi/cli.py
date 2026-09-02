@@ -17,7 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with NEST.  If not, see <http://www.gnu.org/licenses/>.
 
-
 import argparse
 import os
 import subprocess
@@ -36,7 +35,7 @@ filepath = Path(__file__).parent.resolve() / "main.py"
 def main():
     global HOST, PORT, NUM_PROCESSES
 
-    parser = argparse.ArgumentParser(description="NEST MPI Server Instance for NEST Simulator", add_help=False)
+    parser = argparse.ArgumentParser(description="A MPI server for the NEST Simulator", add_help=False)
     parser.add_argument(
         "operation",
         choices=[
@@ -47,7 +46,7 @@ def main():
     parser.add_argument(
         "-h", "--host", type=str, help="use hostname/IP address <HOST> for the server [default: 127.0.0.1]"
     )
-    parser.add_argument("-n", type=int, help="number of processes to start [default: 1]")
+    parser.add_argument("-n", "--n", type=int, help="number of processes to run [default: 1]")
     parser.add_argument("-p", "--port", type=int, help="use port <PORT> for opening the socket [default: 52425]")
 
     if len(sys.argv) == 1:
@@ -60,14 +59,14 @@ def main():
         HOST = args.host
 
     if args.n:
-        NUM_PROCESSES = args.n
+        N = args.n
 
     if args.port:
         PORT = args.port
 
     if args.operation == "start":
         subprocess.run(
-            f"mpirun -n {NUM_PROCESSES} {filepath} --host={HOST} --port={PORT}",
+            f"mpirun -n {N} {filepath} --host={HOST} --port={PORT}",
             shell=True,
             executable="/bin/bash",
             check=True,
