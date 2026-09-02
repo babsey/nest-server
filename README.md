@@ -23,7 +23,7 @@ Entering `nest-server` without sub-command prints the documentation:
 ```
 usage: nest-server [-d] [-h HOST] [-o] [-p PORT] [-t TIMEOUT] [-w WORKERS] {log,pid,start,stop,version}
 
-NEST Server Instance for NEST Simulator
+A Python-based API server for NEST Simulator
 
 positional arguments:
   {log,pid,start,stop,version}
