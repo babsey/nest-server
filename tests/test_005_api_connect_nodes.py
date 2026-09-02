@@ -1,4 +1,4 @@
-def test_api_selfconnect_node(client):  # noqa: F811
+def test_api_selfconnect_node(client):
     response = client.post("/api/Create", json={"model": "iaf_psc_alpha"})
     assert response.status_code == 200
     node_ids = response.json
@@ -9,7 +9,7 @@ def test_api_selfconnect_node(client):  # noqa: F811
     assert response.json["source"] == response.json["target"] == node_ids[0]
 
 
-def test_api_selfconnect_nodes(client):  # noqa: F811
+def test_api_selfconnect_nodes(client):
     response = client.post("/api/Create", json={"model": "iaf_psc_alpha", "n": 2})
     assert response.status_code == 200
     node_ids = response.json
@@ -21,7 +21,7 @@ def test_api_selfconnect_nodes(client):  # noqa: F811
     assert response.json["target"] == 2 * node_ids  # [1,2,1,2]
 
 
-def test_api_connect_multiple_nodes(client):  # noqa: F811
+def test_api_connect_multiple_nodes(client):
     response = client.post("/api/Create", json={"model": "iaf_psc_alpha", "n": 2})
     assert response.status_code == 200
     node_ids = response.json
@@ -34,7 +34,7 @@ def test_api_connect_multiple_nodes(client):  # noqa: F811
     assert response.json["source"] == node_ids[0] and response.json["target"] == node_ids[1]
 
 
-def test_api_connect_various_nodes(client):  # noqa: F811
+def test_api_connect_various_nodes(client):
     response = client.post("/api/Create", json={"model": "iaf_psc_alpha"})
     assert response.status_code == 200
     source_id = response.json
@@ -49,7 +49,7 @@ def test_api_connect_various_nodes(client):  # noqa: F811
     assert response.json["source"] == source_id[0] and response.json["target"] == target_id[0]
 
 
-def test_api_connect_various_multiple_nodes(client):  # noqa: F811
+def test_api_connect_various_multiple_nodes(client):
     response = client.post("/api/Create", json={"model": "iaf_psc_alpha", "n": 2})
     assert response.status_code == 200
     source_ids = response.json

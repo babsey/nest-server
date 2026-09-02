@@ -16,7 +16,7 @@ pytest
 Run pytest in virtual environment.
 
 ```
-uv run --env-file .env --with pytest pytest
+uv run --env-file .env pytest
 ```
 
 Run tests with NEST Server MPI is currently not implemented.
@@ -31,7 +31,7 @@ mpirun -n 2 nest-server-mpi
 Then run tests of NEST Server MPI in nest-clients (deselect `not_mpi` markers)
 
 ```
-uv run --with pytest pytest -v -m `not not_mpi`
+uv run pytest -v -m `not not_mpi`
 ```
 
 ### Debugging tests
@@ -50,5 +50,5 @@ logger.debug("Hello world")
 Run pytest with debugs.
 
 ```
-uv run --env-file .env --with pytest pytest --log-level debug
+uv run --env-file .env pytest --log-level debug
 ```
