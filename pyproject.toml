@@ -6,7 +6,9 @@ readme = "README.md"
 requires-python = ">=3.10"
 license-files = ["LICENSE"]
 authors = [
-  {name = "Sebastian Spreizer", email = "spreizer@web.de"},
+  {name = "Sebastian Spreizer"},
+  {name = "Jochen Eppler"},
+  {name = "Dennis Terhorst"},
 ]
 maintainers = [
   {name = "Sebastian Spreizer", email = "spreizer@web.de"},
@@ -29,39 +31,53 @@ classifiers = [
   "Topic :: Scientific/Engineering :: Artificial Intelligence",
 
   # Specify the Python versions you support here.
+  "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3.14",
 ]
-#dependencies = [
-#  "flask>=3.1",
-#  "flask-cors>=6.0",
-#  "gunicorn>=26.0",
-#  "nest-simulator>=3.10",
-#  "restrictedpython>=8.3",
-#]
-dynamic = ["dependencies"]
+dependencies = [
+  "flask>=3.1",
+  "flask-cors>=6.0",
+  "gunicorn>=26.2",
+  "nest-simulator>=3.10",
+  "restrictedpython>=8.5",
+]
+
+[project.scripts]
+nest-server = "nest_server.cli:main"
+nest-server-mpi = "nest_server_mpi.cli:main"
 
 [project.urls]
 homepage = "https://github.com/nest/nest-server"
 repository = "https://github.com/nest/nest-server"
 documentation = "https://nest-simulator.readthedocs.io"
 
-[dependency-groups]
-dev = [
-  "black>=26.5.1",
-  "flake8>=7.3.0",
-  "isort>=8.0.1",
-  "pre-commit>=4.6.0",
+[project.optional-dependencies]
+mpi = [
+  "docopt>=0.6",
+  "mpi4py>=4.1",
 ]
 
-[tool.setuptools]
-script-files = ["scripts/nest-server", "scripts/nest-server-mpi"]
+[dependency-groups]
+dev = [
+  # "black>=26.5",
+  # "flake8>=7.3",
+  # "isort>=8.0",
+  "pre-commit>=4.6",
+  "pytest>=9.1",
+  "pytest-cov>=7.1",
+  "ruff>=0.16.5",
+]
 
-[tool.setuptools.dynamic]
-dependencies = {file = ["requirements.txt"]}
+[build-system]
+requires = ["uv_build>=0.12.7,<0.13.0"]
+build-backend = "uv_build"
+
+#[tool.setuptools]
+#script-files = ["scripts/nest-server", "scripts/nest-server-mpi"]
 
 [tool.black]
 line-length = 120
@@ -76,3 +92,6 @@ line_length = 120
 multi_line_output = 3
 profile = "black"
 skip_gitignore = true
+
+[tool.ruff]
+line-length = 120
