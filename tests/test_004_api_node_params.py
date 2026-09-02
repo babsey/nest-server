@@ -1,4 +1,4 @@
-def test_api_create_node_then_set_param(client):  # noqa: F811
+def test_api_create_node_then_set_param(client):
     I_e = 376
 
     response = client.post("/api/Create", json={"model": "iaf_psc_alpha"})
@@ -13,7 +13,7 @@ def test_api_create_node_then_set_param(client):  # noqa: F811
     assert response.json == I_e
 
 
-def test_api_create_multiple_nodes_then_set_params(client):  # noqa: F811
+def test_api_create_multiple_nodes_then_set_params(client):
     I_e = 376
 
     response = client.post("/api/Create", json={"model": "iaf_psc_alpha", "n": 2})
@@ -29,7 +29,7 @@ def test_api_create_multiple_nodes_then_set_params(client):  # noqa: F811
     assert response.json == [I_e, I_e]
 
 
-def test_api_create_multiple_nodes_then_set_various_params(client):  # noqa: F811
+def test_api_create_multiple_nodes_then_set_various_params(client):
     I_e = [375, 376]
 
     response = client.post("/api/Create", json={"model": "iaf_psc_alpha", "n": 2})

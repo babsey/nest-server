@@ -1,4 +1,4 @@
-def test_api_simulate(client):  # noqa: F811
+def test_api_simulate(client):
     response = client.post("/api/GetKernelStatus", json={"keys": "biological_time"})
     assert response.status_code == 200
     assert isinstance(response.json, float)

@@ -1,2 +1,2 @@
-def test_get_request(client):  # noqa: F811
+def test_get_request(client):
     assert client.get("/").status_code == 200

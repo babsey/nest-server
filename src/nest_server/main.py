@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-#
-# hl_api_server.py
+# main.py
 #
 # This file is part of NEST.
 #
@@ -60,9 +58,9 @@ EXCEPTION_ERROR_STATUS = 400
 __all__ = [
     "app",
     "do_exec",
-    "set_mpi_comm",
-    "run_mpi_app",
     "nestify",
+    "run_mpi_app",
+    "set_mpi_comm",
 ]
 
 app = Flask(__name__)
@@ -99,7 +97,7 @@ def _check_security():
 
 
 @app.before_request
-def _setup_auth():  # noqa: C901
+def _setup_auth():
     """
     Authentication function that generates and validates the NESTServerAuth
     header with a bearer token.
@@ -110,10 +108,10 @@ def _setup_auth():  # noqa: C901
     try:
         # Import the modules inside of the auth function, so that if they fail
         # the auth returns a forbidden error.
-        import gc  # noqa
-        import hashlib  # noqa
-        import inspect  # noqa
-        import time  # noqa
+        import gc
+        import hashlib
+        import inspect
+        import time
 
         # Find our reference to the current function in the garbage collector.
         frame = inspect.currentframe()
@@ -122,12 +120,14 @@ def _setup_auth():  # noqa: C901
         functype = type(lambda: 0)
         funcs = []
         for func in gc.get_referrers(code):
-            if type(func) is functype:
-                if getattr(func, "__code__", None) is code:
-                    if getattr(func, "__globals__", None) is globs:
-                        funcs.append(func)
-                        if len(funcs) > 1:
-                            return ("Unauthorized", 403)
+            if (
+                type(func) is functype
+                and getattr(func, "__code__", None) is code
+                and getattr(func, "__globals__", None) is globs
+            ):
+                funcs.append(func)
+                if len(funcs) > 1:
+                    return ("Unauthorized", 403)
         self = funcs[0]
 
         # Use the salted hash (unless `PYTHONHASHSEED` is fixed) of the
@@ -192,7 +192,7 @@ def do_exec(args, kwargs):
     source_code = kwargs.get("source", "")
     source_cleaned = clean_code(source_code)
 
-    response = dict()
+    response = {}
     if RESTRICTION_DISABLED:
         with Capturing() as stdout:
             globals_ = globals().copy()
@@ -201,7 +201,7 @@ def do_exec(args, kwargs):
         if len(stdout) > 0:
             response["stdout"] = "\n".join(stdout)
     else:
-        code = RestrictedPython.compile_restricted(source_cleaned, "<inline>", "exec")  # noqa
+        code = RestrictedPython.compile_restricted(source_cleaned, "<inline>", "exec")
         globals_ = get_restricted_globals()
         globals_.update(get_modules_from_env())
         get_or_error(exec)(code, globals_)
@@ -210,7 +210,7 @@ def do_exec(args, kwargs):
 
     if "return" in kwargs:
         if isinstance(kwargs["return"], (list, tuple)):
-            data = dict([(variable, globals_.get(variable, None)) for variable in kwargs["return"]])
+            data = {(variable, globals_.get(variable, None)) for variable in kwargs["return"]}
         else:
             data = globals_.get(kwargs["return"], None)
 
@@ -218,12 +218,12 @@ def do_exec(args, kwargs):
     return response
 
 
-def log(call_name, msg):
+def log(call_name: str, msg: str):
     msg = f"==> MASTER 0/{time.time():.7f} ({call_name}): {msg}"
     logger.debug(msg)
 
 
-def do_call(call_name, args=[], kwargs={}):  # noqa: C901
+def do_call(call_name: str, args: list | None = None, kwargs: dict | None = None):
     """Call a PYNEST function or execute a script within the server.
 
     If the server is run serially (i.e., without MPI), this function
@@ -242,6 +242,12 @@ def do_call(call_name, args=[], kwargs={}):  # noqa: C901
     process (i.e., the task with rank 0) in a distributed scenario.
 
     """
+
+    if args is None:
+        args = []
+
+    if kwargs is None:
+        kwargs = {}
 
     if mpi_comm is not None:
         assert mpi_comm.Get_rank() == 0
@@ -292,7 +298,7 @@ def do_call(call_name, args=[], kwargs={}):  # noqa: C901
                 master_response = call(*args, **kwargs)
             log("master response of call", master_response)
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to execute call: {e}")
             master_response = None
 
@@ -339,7 +345,7 @@ def route_api():
 
 
 @app.route("/api/<call>", methods=["GET", "POST"])
-def route_api_call(call):
+def route_api_call(call: str):
     """Route to call function in NEST."""
     print(f"\n{'=' * 40}\n", flush=True)
     args, kwargs = get_arguments(request)
@@ -370,13 +376,16 @@ class ErrorHandler(Exception):
     status_code = 400
     lineno = -1
 
-    def __init__(self, message: str, lineno: int = None, status_code: int = None, payload=None):
+    def __init__(self, message: str, lineno: int | None = None, status_code: int | None = None, payload=None):
         super().__init__()
         self.message = message
+
         if status_code is not None:
             self.status_code = status_code
+
         if lineno is not None:
             self.lineno = lineno
+
         self.payload = payload
 
     def to_dict(self):
@@ -397,9 +406,9 @@ def error_handler(e):
 # of error would be wrong.
 def clean_code(source):
     codes = source.split("\n")
-    codes_cleaned = []  # noqa
+    codes_cleaned = []
     for code in codes:
-        if code.startswith("import") or code.startswith("from"):
+        if code.startswith(("import", "from")):
             codes_cleaned.append("#" + code)
         else:
             codes_cleaned.append(code)
@@ -453,11 +462,11 @@ def get_modules_from_env():
         `NEST_SERVER_MODULES="import nest; import numpy as np; from numpy import random"`
     is converted to the following dictionary:
         `{'nest': <module 'nest'> 'np': <module 'numpy'>, 'random': <module 'numpy.random'>}`
-    """  # noqa: W505
+    """
     modules = {}
     try:
         parsed = ast.iter_child_nodes(ast.parse(MODULES))
-    except [SyntaxError, ValueError]:
+    except (SyntaxError, ValueError):
         raise SyntaxError("The NEST server module environment variables contains syntax errors.")
     for node in parsed:
         if isinstance(node, ast.Import):
@@ -486,7 +495,7 @@ def get_or_error(func):
             detail = err.args[0]
             lineno = get_lineno(err, 1)
 
-        except Exception as err:
+        except Exception as err:  # noqa: BLE001
             error_class = err.__class__.__name__
             detail = err.args[0]
             lineno = get_lineno(err, -1)
@@ -495,9 +504,9 @@ def get_or_error(func):
             print(line, flush=True)
 
         if lineno == -1:
-            message = "%s: %s" % (error_class, detail)
+            message = f"{error_class}: {detail}"
         else:
-            message = "%s at line %d: %s" % (error_class, lineno, detail)
+            message = f"{error_class} at line {lineno}: {detail}"
 
         raise ErrorHandler(message, lineno)
 
@@ -518,23 +527,23 @@ def get_restricted_globals():
     restricted_builtins.update(RestrictedPython.limited_builtins)
     restricted_builtins.update(RestrictedPython.utility_builtins)
     restricted_builtins.update(
-        dict(
-            max=max,
-            min=min,
-            sum=sum,
-            time=time,
-        )
+        {
+            "max": max,
+            "min": min,
+            "sum": sum,
+            "time": time,
+        }
     )
 
-    restricted_globals = dict(
-        __builtins__=restricted_builtins,
-        _print_=RestrictedPython.PrintCollector,
-        _getattr_=RestrictedPython.Guards.safer_getattr,
-        _getitem_=getitem,
-        _getiter_=iter,
-        _unpack_sequence_=RestrictedPython.Guards.guarded_unpack_sequence,
-        _write_=RestrictedPython.Guards.full_write_guard,
-    )
+    restricted_globals = {
+        "__builtins__": restricted_builtins,
+        "_print_": RestrictedPython.PrintCollector,
+        "_getattr_": RestrictedPython.Guards.safer_getattr,
+        "_getitem_": getitem,
+        "_getiter_": iter,
+        "_unpack_sequence_": RestrictedPython.Guards.guarded_unpack_sequence,
+        "_write_": RestrictedPython.Guards.full_write_guard,
+    }
 
     return restricted_globals
 
@@ -554,7 +563,7 @@ def nestify(call_name, args, kwargs):
 
         # if mpi_comm is not None:
         #     if key == "params":
-        #         kwargs[key] = {k: mpi_comm.scatter(value, root=0) for (k, v) in value.items()}  # noqa: W505
+        #         kwargs[key] = {k: mpi_comm.scatter(value, root=0) for (k, v) in value.items()}
 
     log("nestified", (args, kwargs))
 
@@ -656,7 +665,7 @@ def combine(response):
     # raise Exception(msg)  # pylint: disable=W0719
 
 
-def merge_dicts(data: list[dict]) -> dict:  # noqa: C901
+def merge_dicts(data: list[dict]) -> dict:
     """Merge dictionaries of the data.
 
     This function merged list of dictionaries.
@@ -669,8 +678,8 @@ def merge_dicts(data: list[dict]) -> dict:  # noqa: C901
     """
 
     # Merge status of recorder
-    if all(["n_events" in d for d in data]):
-        new_data = {k: [] for k in data[0].keys()}
+    if all("n_events" in d for d in data):
+        new_data = {k: [] for k in data[0]}
         for d in data:
             for k, v in d.items():
                 if isinstance(v, list):
@@ -701,7 +710,6 @@ def merge_dicts(data: list[dict]) -> dict:  # noqa: C901
 
     for d in data:
         for k, v in d.items():
-
             if k not in merged:
                 value_type = value_types.get(k, [])
                 if list in value_type or is_collection:
