@@ -1,16 +1,17 @@
 PYTHON_VERSIONS := 3.10 3.11 3.12 3.13 3.14
 TEST_PY_TARGETS := $(addprefix test-py,$(PYTHON_VERSIONS))
 
-.PHONY: sync test test-cov lint format clean test-all
+.PHONY: sync test coverage lint format clean test-all
 
 sync:
 	uv sync
 
 test:
-	uv run --env-file .env pytest
+	uv run --env-file .env pytest -v
 
-test-cov:
-	uv run --env-file .env pytest -v --cov=./src/nest_server
+coverage:
+	uv run --env-file .env coverage run --source=./src/nest_server -m pytest
+	uv run coverage report
 
 lint:
 	uv run ruff check .
