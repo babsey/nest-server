@@ -10,7 +10,7 @@ test:
 	uv run --env-file .env pytest
 
 test-cov:
-	uv run --env-file .env pytest -v --cov=./src
+	uv run --env-file .env pytest -v --cov=./src/nest_server
 
 lint:
 	uv run ruff check .
