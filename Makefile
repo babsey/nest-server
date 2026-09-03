@@ -1,10 +1,13 @@
 PYTHON_VERSIONS := 3.10 3.11 3.12 3.13 3.14
 TEST_PY_TARGETS := $(addprefix test-py,$(PYTHON_VERSIONS))
 
-.PHONY: sync test coverage lint format clean test-all
+.PHONY: sync pre-commit test coverage lint format clean test-all
 
 sync:
 	uv sync
+
+pre-commit:
+	uv run pre-commit run --all-files
 
 test:
 	uv run --env-file .env pytest -v
