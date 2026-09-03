@@ -2,13 +2,13 @@ name: Code quality
 on: push
 
 jobs:
-  ruff-check:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/ruff-action@v4.1.0
 
-  ruff-format:
+  format:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
