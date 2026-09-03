@@ -1,7 +1,7 @@
 [project]
 name = "nest-server"
 version = "3.0.0b1"
-description = "A server instance for NEST Simulator"
+description = "A Python-based API server for the NEST Simulator"
 readme = "README.md"
 requires-python = ">=3.10"
 license-files = ["LICENSE"]
@@ -48,7 +48,7 @@ dependencies = [
 
 [project.scripts]
 nest-server = "nest_server.cli:main"
-nest-server-mpi = "nest_server_mpi.cli:main"
+nest-server-mpi = "nest_server.mpi.cli:main"
 
 [project.urls]
 homepage = "https://github.com/nest/nest-server"
@@ -75,9 +75,6 @@ dev = [
 [build-system]
 requires = ["uv_build>=0.12.7,<0.13.0"]
 build-backend = "uv_build"
-
-#[tool.setuptools]
-#script-files = ["scripts/nest-server", "scripts/nest-server-mpi"]
 
 [tool.black]
 line-length = 120
