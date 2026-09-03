@@ -3,14 +3,14 @@
 """A MPI Server for the NEST Simulator.
 
 Usage:
-  nest-server-mpi -n N [--host HOST] [--port PORT] start
+  mpirun -n N <file> [--host HOST] [--port PORT]
 
 Options:
   --host HOST   use hostname/IP address HOST for server [default: 127.0.0.1]
   --port PORT   use port PORT for opening the socket [default: 52425]
 """
 
-# main.py
+# prog.py
 #
 # This file is part of NEST.
 #

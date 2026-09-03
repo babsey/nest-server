@@ -28,8 +28,6 @@ from gunicorn.app.wsgiapp import WSGIApplication
 from nest_server import __version__
 from nest_server.helpers import get_boolean_environ
 
-truthy_values = ("1", "t", "true", "y", "yes")
-
 DAEMON = get_boolean_environ("NEST_SERVER_DAEMON")
 HOST = os.getenv("NEST_SERVER_HOST", "127.0.0.1")
 LOGFILE = os.getenv("NEST_SERVER_LOGFILE", "/tmp/nest-server.log")
