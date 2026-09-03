@@ -1,11 +1,11 @@
 name: Functional tests
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
   pull_request_target:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
 
 jobs:
@@ -30,7 +30,7 @@ jobs:
 
   coverage:
     runs-on: ubuntu-latest
-    needs: [setup-uv]
+    needs: setup-uv
     env:
       UV_CACHE_DIR: /tmp/.uv-cache
 
@@ -48,12 +48,9 @@ jobs:
       - name: Run coverage with pytest
         run: make coverage
 
-      - name: Minimize uv cache
-        run: uv cache prune --ci
-
   pytest-all:
     runs-on: ubuntu-latest
-    needs: [setup-uv]
+    needs: setup-uv
     env:
       UV_CACHE_DIR: /tmp/.uv-cache
 
@@ -70,6 +67,3 @@ jobs:
 
       - name: Run pytest for multiple python versions
         run: make test-all
-
-      - name: Minimize uv cache
-        run: uv cache prune --ci
