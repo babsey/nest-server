@@ -1,5 +1,4 @@
 repos:
-
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
@@ -10,16 +9,16 @@ repos:
       - id: mixed-line-ending
       - id: trailing-whitespace
 
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v2.3.1
-    hooks:
-      - id: mypy
-        args: [--python-version=3.14]
-
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.16.5
+    rev: v0.16.6
     hooks:
       - id: ruff-check
+        args: [--fix]
       - id: ruff-format
 
-exclude: 'build/.*|.venv*/.*'
+  - repo: https://github.com/astral-sh/ty-pre-commit
+    rev: v0.0.78
+    hooks:
+      - id: ty
+
+exclude: "build/.*|.venv*/.*"

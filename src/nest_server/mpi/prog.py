@@ -102,10 +102,7 @@ else:
                     if len(args) >= 2:
                         keys = args[1]
 
-                    if keys:
-                        response = nodes_or_conns.get(keys)
-                    else:
-                        response = nodes_or_conns.get()
+                    response = nodes_or_conns.get() if keys else nodes_or_conns.get(keys)
 
                 elif call_name == "SetStatus":
                     nodes_or_conns = kwargs.get("nodes_or_conns", args[0])

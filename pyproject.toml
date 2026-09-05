@@ -64,10 +64,10 @@ mpi = [
 [dependency-groups]
 dev = [
   "coverage>=7.16",
-  "mypy>=2.3",
   "pre-commit>=4.6",
   "pytest>=9.1",
   "ruff>=0.16",
+  "ty>=0.0",
 ]
 
 [build-system]
@@ -76,3 +76,17 @@ build-backend = "uv_build"
 
 [tool.ruff]
 line-length = 120
+target-version = "py314"
+
+[tool.ruff.lint]
+extend-select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.ty.environment]
+python-version = "3.14"
+
+[tool.ty.rules]
+unresolved-attribute = "ignore"
+unresolved-import = "ignore"

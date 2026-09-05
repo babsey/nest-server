@@ -18,6 +18,7 @@
 # along with NEST.  If not, see <http://www.gnu.org/licenses/>.
 
 import ast
+import contextlib
 import importlib
 import inspect
 import io
@@ -155,7 +156,7 @@ def _setup_auth():
         try:
             del globals()["app"]
         except KeyError:
-            pass
+            contextlib.suppress(KeyError)
         # Things get more straightforward here: Every time a request is
         # handled, compare the NESTServerAuth header to the hash, with a
         # constant-time algorithm to avoid timing attacks.
@@ -274,10 +275,7 @@ def do_call(call_name: str, args: list | None = None, kwargs: dict | None = None
                 if len(args) >= 2:
                     keys = args[1]
 
-                if keys:
-                    master_response = nodes_or_conns.get(keys)
-                else:
-                    master_response = nodes_or_conns.get()
+                master_response = nodes_or_conns.get(keys) if keys else nodes_or_conns.get()
 
             elif call_name == "SetStatus":
                 nodes_or_conns = kwargs.get("nodes_or_conns", [])
@@ -462,8 +460,9 @@ def get_modules_from_env():
     modules = {}
     try:
         parsed = ast.iter_child_nodes(ast.parse(MODULES))
-    except (SyntaxError, ValueError):
-        raise SyntaxError("The NEST server module environment variables contains syntax errors.")
+    except (SyntaxError, ValueError) as exc:
+        raise SyntaxError("The NEST server module environment variables contains syntax errors.") from exc
+
     for node in parsed:
         if isinstance(node, ast.Import):
             for alias in node.names:
@@ -471,6 +470,7 @@ def get_modules_from_env():
         elif isinstance(node, ast.ImportFrom):
             for alias in node.names:
                 modules[alias.asname or alias.name] = importlib.import_module(f"{node.module}.{alias.name}")
+
     return modules
 
 
@@ -499,10 +499,7 @@ def get_or_error(func):
         for line in traceback.format_exception(*sys.exc_info()):
             print(line, flush=True)
 
-        if lineno == -1:
-            message = f"{error_class}: {detail}"
-        else:
-            message = f"{error_class} at line {lineno}: {detail}"
+        message = f"{error_class}: {detail}" if lineno == -1 else f"{error_class} at line {lineno}: {detail}"
 
         raise ErrorHandler(message, lineno)
 
@@ -546,7 +543,7 @@ def get_restricted_globals():
 
 def nestify(call_name, args, kwargs):
     """Get the NEST API call and convert arguments if neccessary."""
-    log("nestify", (args, kwargs))
+    log("nestified", f"{args}, {kwargs}")
 
     call = getattr(nest, call_name)
     objectnames = ["nodes", "nodes_or_conns", "pre", "post", "source", "target"]
@@ -561,7 +558,7 @@ def nestify(call_name, args, kwargs):
         #     if key == "params":
         #         kwargs[key] = {k: mpi_comm.scatter(value, root=0) for (k, v) in value.items()}
 
-    log("nestified", (args, kwargs))
+    log("nestified", f"{args}, {kwargs}")
 
     return call, args, kwargs
 
@@ -648,7 +645,7 @@ def combine(response):
     # return the master response if all responses are known to be the same
     if all(isinstance(v, (list, tuple)) for v in response):
         # return combine([v[0] for v in response])
-        return [v_j for v_i in list(zip(*response)) for v_j in v_i if v_j is not None]
+        return [v_j for v_i in list(zip(*response, strict=False)) for v_j in v_i if v_j is not None]
 
     # return a single merged dictionary if there are many of them
     if all(isinstance(v, dict) for v in response):
