@@ -23,7 +23,7 @@ format:
 	uv run ruff format --check .
 
 clean:
-	rm -rf .venv .venv-* dist *.egg-info .pytest_cache .mypy_cache .ruff_cache .coverage
+	rm -rf .pytest_cache .ruff_cache .venv .venv-* dist *.egg-info htmlcov .coverage
 
 test-all: $(TEST_PY_TARGETS)
 
