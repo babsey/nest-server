@@ -17,11 +17,12 @@
 # You should have received a copy of the GNU General Public License
 # along with NEST.  If not, see <http://www.gnu.org/licenses/>.
 
+import contextlib
 from importlib import metadata
 
 try:
     __version__ = metadata.version("nest-server")
 except metadata.PackageNotFoundError:
-    pass
+    contextlib.suppress(metadata.PackageNotFoundError)
 
 del metadata

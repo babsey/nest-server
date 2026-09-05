@@ -42,7 +42,7 @@ def load_pid(file):
     if not Path(file).exists():
         return
 
-    with open(file, "r") as f:
+    with open(file) as f:
         pid = int(f.readline())
 
     return pid

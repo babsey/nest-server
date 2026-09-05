@@ -38,15 +38,13 @@ def main():
     parser = argparse.ArgumentParser(description="A MPI server for the NEST Simulator", add_help=False)
     parser.add_argument(
         "operation",
-        choices=[
-            "start",
-        ],
+        choices=["run"],
     )
 
     parser.add_argument(
         "-h", "--host", type=str, help="use hostname/IP address <HOST> for the server [default: 127.0.0.1]"
     )
-    parser.add_argument("-n", "--n", type=int, help="number of processes to run [default: 1]")
+    parser.add_argument("-n", "-np", type=int, help="number of processes to run [default: 1]")
     parser.add_argument("-p", "--port", type=int, help="use port <PORT> for opening the socket [default: 52425]")
 
     if len(sys.argv) == 1:
@@ -64,7 +62,7 @@ def main():
     if args.port:
         PORT = args.port
 
-    if args.operation == "start":
+    if args.operation == "run":
         subprocess.run(
             f"mpirun -n {NUM_PROCESSES} {filepath} --host={HOST} --port={PORT}",
             shell=True,
