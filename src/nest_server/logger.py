@@ -38,8 +38,3 @@ def log(call_name: str, msg: str) -> None:
 def mpi_master_log(call_name: str, msg: str) -> None:
     msg = f"==> MASTER 0/{time.time():.7f} ({call_name}): {msg}"
     logger.debug(msg)
-
-
-def mpi_worker_log(rank: int, call_name: str, msg: str) -> None:
-    msg = f"==> WORKER {rank}/{time.time():.7f} ({call_name}): {msg}"
-    logger.debug(msg)

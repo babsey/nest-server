@@ -34,6 +34,9 @@ nest_calls = dir(nest)
 nest_calls = list(filter(lambda x: not x.startswith("_"), nest_calls))
 nest_calls.sort()
 
+nest_types = [nest.NodeCollection, nest.SynapseCollection]
+nest_version = nest.build_info["version"]
+
 
 @get_or_error
 def api_client(call_name: str, args: list, kwargs: dict) -> dict | None:
@@ -50,7 +53,7 @@ def api_client(call_name: str, args: list, kwargs: dict) -> dict | None:
     else:
         response = master_call(call_name, args, kwargs)
 
-    return response
+    return nest.serialize_data(response)
 
 
 def do_call(call, args: list, kwargs: dict):
@@ -65,7 +68,7 @@ def do_call(call, args: list, kwargs: dict):
         if len(args) >= 2:
             keys = args[1]
 
-        log("GetStatus", f"{nodes_or_conns} {keys}")
+        # log("GetStatus", f"{nodes_or_conns}.get({keys})")
         response = nodes_or_conns.get(keys) if keys else nodes_or_conns.get()
 
     elif call.__name__ == "SetStatus":
@@ -77,7 +80,7 @@ def do_call(call, args: list, kwargs: dict):
         if len(args) >= 2:
             params = args[1]
 
-        log("SetStatus", f"{nodes_or_conns} {params}")
+        # log("SetStatus", f"{nodes_or_conns}.set({params})")
         response = nodes_or_conns.set(params)
 
     else:
@@ -102,7 +105,7 @@ def do_exec(args: list, kwargs: dict) -> dict:
 
     else:
         code = RestrictedPython.compile_restricted(source_cleaned, "<inline>", "exec")
-        globals_ = get_restricted_globals()
+        globals_ = get_restricted_globals(nest_types)
         globals_.update(get_modules_from_env())
         get_or_error(exec)(code, globals_)
 
@@ -164,9 +167,9 @@ def master_call(call_name: str, args: list | None = None, kwargs: dict | None = 
             response = None
 
     if mpi_comm is not None:
-        return mpi_receive_response_gather(call_name, response)
+        return mpi_receive_response_gather(call_name, nest.serialize_data(response))
 
-    return response
+    return nest.serialize_data(response)
 
 
 def nestify(call_name: str, args: list, kwargs: dict):

@@ -21,8 +21,6 @@ import io
 import sys
 import traceback
 
-import nest
-
 
 class Capturing(list):
     """Monitor stdout contents i.e. print."""
@@ -83,11 +81,6 @@ def get_or_error(func):
     def func_wrapper(call, *args, **kwargs):
         try:
             return func(call, *args, **kwargs)
-
-        except nest.NESTError as err:
-            error_class = err.errorname + " (NESTError)"
-            detail = err.errormessage
-            lineno = get_lineno(err, 1)
 
         except (KeyError, SyntaxError, TypeError, ValueError) as err:
             error_class = err.__class__.__name__

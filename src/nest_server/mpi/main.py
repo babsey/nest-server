@@ -17,8 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with NEST.  If not, see <http://www.gnu.org/licenses/>.
 
-import nest
-
 from nest_server.logger import mpi_master_log
 from nest_server.mpi.helpers import combine
 from nest_server.mpi.state import mpi_comm
@@ -29,7 +27,7 @@ def mpi_receive_response_gather(call_name: str, master_response):
         return
 
     mpi_master_log(call_name, "waiting for response gather")
-    response = mpi_comm.gather(nest.serialize_data(master_response), root=0)
+    response = mpi_comm.gather(master_response, root=0)
     mpi_master_log(call_name, f"received response gather, data={response}")
 
     return combine(response)

@@ -77,7 +77,7 @@ build-backend = "uv_build"
 [tool.coverage.run]
 omit = [
   "cli.py",
-  "worker.py",
+  "runner.py",
 ]
 
 [tool.ruff]

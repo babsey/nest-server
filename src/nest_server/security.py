@@ -22,7 +22,6 @@ import importlib
 import os
 import time
 
-import nest
 import RestrictedPython
 
 from nest_server.helpers import get_boolean_environ
@@ -61,11 +60,14 @@ def _check_security():
         print("\n - ".join([" "] + msg) + "\n")
 
 
-def get_restricted_globals():
+def get_restricted_globals(extra_types: list | None = None):
     """Get restricted globals for exec function."""
 
+    if extra_types is None:
+        extra_types = []
+
     def getitem(obj, index):
-        typelist = (list, tuple, dict, nest.NodeCollection)
+        typelist = [list, tuple, dict] + extra_types
         if obj is not None and type(obj) in typelist:
             return obj[index]
         msg = f"Error getting restricted globals: unidentified object '{obj}'."

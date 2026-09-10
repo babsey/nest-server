@@ -19,13 +19,12 @@
 
 import contextlib
 
-import nest
 from flask import Flask, abort, jsonify, request
 from flask_cors import CORS
 
 from nest_server.handler import ErrorHandler
 from nest_server.helpers import get_arguments
-from nest_server.kernel import api_client, master_call, nest_calls
+from nest_server.kernel import api_client, master_call, nest_calls, nest_version
 from nest_server.logger import log
 from nest_server.mpi.state import mpi_comm
 from nest_server.security import ACCESS_TOKEN, AUTH_DISABLED, CORS_ORIGINS, EXEC_CALL_ENABLED, _check_security
@@ -135,7 +134,7 @@ def create_app():
     def index():
         return jsonify(
             {
-                "nest": nest.build_info["version"],
+                "nest": nest_version,
                 "mpi": mpi_comm is not None,
             }
         )
@@ -143,15 +142,17 @@ def create_app():
     @app.route("/api", methods=["GET"])
     def route_api():
         """Route to list call functions in NEST."""
+
         return jsonify(nest_calls)
 
     @app.route("/api/<call>", methods=["GET", "POST"])
     def route_api_call(call: str):
         """Route to call function in NEST."""
+
         print(f"\n{'=' * 40}\n", flush=True)
         args, kwargs = get_arguments(request)
         log("route_api_call", f"call={call}, args={args}, kwargs={kwargs}")
-        return jsonify(nest.serialize_data(api_client(call, args, kwargs)))
+        return jsonify(api_client(call, args, kwargs))
 
     @app.route("/exec", methods=["GET", "POST"])
     def route_exec():
@@ -160,7 +161,7 @@ def create_app():
         if EXEC_CALL_ENABLED:
             args, kwargs = get_arguments(request)
             response = master_call("exec", args, kwargs)
-            return jsonify(nest.serialize_data(response))
+            return jsonify(response)
         else:
             abort(
                 403,
