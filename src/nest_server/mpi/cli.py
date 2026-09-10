@@ -64,7 +64,7 @@ def main():
 
     if args.operation == "run":
         subprocess.run(
-            f"mpirun -n {NUM_PROCESSES} {filepath} --host={HOST} --port={PORT}",
+            f"mpirun -n {NUM_PROCESSES} {filepath} --host {HOST} --port {PORT}",
             shell=True,
             executable="/bin/bash",
             check=True,

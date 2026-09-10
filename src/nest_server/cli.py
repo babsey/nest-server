@@ -38,14 +38,21 @@ TIMEOUT = int(os.getenv("NEST_SERVER_TIMEOUT", "30"))
 WORKERS = int(os.getenv("NEST_SERVER_WORKERS", "1"))
 
 
-def load_pid(file):
-    if not Path(file).exists():
+def load_pid():
+    if not Path(PIDFILE).exists():
         return
 
-    with open(file) as f:
+    with open(PIDFILE) as f:
         pid = int(f.readline())
 
     return pid
+
+
+def remove_pidfile():
+    if not Path(PIDFILE).exists():
+        return
+
+    return os.remove(Path(PIDFILE))
 
 
 class StandaloneApplication(WSGIApplication):
@@ -112,12 +119,12 @@ def main():
         subprocess.run(f"tail -f {LOGFILE}", shell=True, executable="/bin/bash", check=True)
 
     elif args.operation == "pid":
-        pid = load_pid(PIDFILE)
+        pid = load_pid()
 
         if pid:
             print(pid)
         else:
-            print("No process exists.")
+            print("No such process")
 
     elif args.operation == "start":
         options = {
@@ -139,11 +146,14 @@ def main():
         StandaloneApplication("nest_server.main:create_app()", options).run()
 
     elif args.operation == "stop":
-        pid = load_pid(PIDFILE)
+        pid = load_pid()
 
         if pid:
-            subprocess.run(f"kill {pid}", shell=True, executable="/bin/bash", check=True)
-            print(f"NEST Server running at http://{HOST}:{PORT} has stopped.")
+            try:
+                subprocess.run(f"kill {pid}", shell=True, executable="/bin/bash", check=True)
+                print(f"NEST Server running at http://{HOST}:{PORT} has stopped.")
+            except subprocess.CalledProcessError:
+                remove_pidfile()
         else:
             print(f"NEST Server is not running at http://{HOST}:{PORT}.")
 

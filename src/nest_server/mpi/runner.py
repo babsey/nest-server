@@ -91,15 +91,15 @@ else:
             # subset of processes raises an exception, a deadlock due
             # to mismatching MPI communication calls is inevitable on
             # the next call.
-            try:
-                response = do_call(call, args, kwargs)
+            # try:
+            response = do_call(call, args, kwargs)
 
-            except Exception as e:  # noqa: BLE001
-                logger.error(f"Failed to execute call: {e}")
-                response = None
-                continue
+            # except Exception as e:
+            #     logger.error(f"Failed to execute call: {e}")
+            #     response = None
+            #     continue
 
-        mpi_worker_log(rank, call_name, f"local call - response={response}")
+        # mpi_worker_log(rank, call_name, f"local call - response={response}")
         response = nest.serialize_data(response)
 
         mpi_worker_log(rank, call_name, f"sending response gather, data={response}")

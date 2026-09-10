@@ -25,7 +25,7 @@ import RestrictedPython
 
 from nest_server.handler import Capturing, get_or_error
 from nest_server.helpers import clean_code
-from nest_server.logger import log, logger, mpi_master_log
+from nest_server.logger import log, mpi_master_log
 from nest_server.mpi.main import mpi_receive_response_gather, mpi_send_bcast
 from nest_server.mpi.state import mpi_comm
 from nest_server.security import RESTRICTION_DISABLED, get_modules_from_env, get_restricted_globals
@@ -54,7 +54,7 @@ def api_client(call_name: str, args: list, kwargs: dict) -> dict | None:
 
 
 def do_call(call, args: list, kwargs: dict):
-    log("do call", call.__name__)
+    log("do_call", f"{call.__name__}, {args}, {kwargs}")
 
     if call.__name__ == "GetStatus":
         nodes_or_conns = kwargs.get("nodes_or_conns", [])
@@ -65,6 +65,7 @@ def do_call(call, args: list, kwargs: dict):
         if len(args) >= 2:
             keys = args[1]
 
+        log("GetStatus", f"{nodes_or_conns} {keys}")
         response = nodes_or_conns.get(keys) if keys else nodes_or_conns.get()
 
     elif call.__name__ == "SetStatus":
@@ -76,6 +77,7 @@ def do_call(call, args: list, kwargs: dict):
         if len(args) >= 2:
             params = args[1]
 
+        log("SetStatus", f"{nodes_or_conns} {params}")
         response = nodes_or_conns.set(params)
 
     else:
@@ -153,13 +155,13 @@ def master_call(call_name: str, args: list | None = None, kwargs: dict | None = 
         call, args, kwargs = nestify(call_name, args, kwargs)
         mpi_master_log(call_name, f"local call, args={args}, kwargs={kwargs}")
 
-        try:
-            response = do_call(call, args, kwargs)
-            log("call response", f"{response}")
+        # try:
+        response = do_call(call, args, kwargs)
+        log("call response", f"{response}")
 
-        except Exception as e:  # noqa: BLE001
-            logger.error(f"Failed to execute call: {e}")
-            response = None
+        # except Exception as e:
+        #     logger.error(f"Failed to execute call: {e}")
+        #     response = None
 
     if mpi_comm is not None:
         return mpi_receive_response_gather(call_name, response)
