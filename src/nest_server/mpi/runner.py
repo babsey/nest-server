@@ -3,8 +3,8 @@
 """A MPI Server for the NEST Simulator.
 
 Usage:
-  prog --help
-  mpirun -n N prog [--host HOST] [--port PORT]
+  runner --help
+  mpirun -n N runner [--host HOST] [--port PORT]
 
 Options:
   -h --help     display usage information and exit
@@ -12,7 +12,7 @@ Options:
   --port PORT   use port PORT for opening the socket [default: 52425]
 """
 
-# prog.py
+# runner.py
 #
 # This file is part of NEST.
 #
@@ -31,65 +31,76 @@ Options:
 # You should have received a copy of the GNU General Public License
 # along with NEST.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
+import time
+
 from docopt import docopt
 from mpi4py import MPI
 
 if __name__ == "__main__":
     opt = docopt(__doc__)
 
-import logging
 import os
-import time
 
 import nest
 from flask.logging import default_handler
 
-import nest_server.main as nest_server
+from nest_server.kernel import do_call, do_exec, nestify
+from nest_server.logger import log
+from nest_server.main import create_app
+from nest_server.mpi.state import set_mpi_comm
 
+# NOTE: It is important that the logger for worker is placed here.
 logger = logging.getLogger(__name__)
 logger.addHandler(default_handler)
-logger.setLevel(os.getenv("NEST_SERVER_MPI_LOGGER_LEVEL", "INFO"))
+logger.setLevel(os.getenv("NEST_SERVER_LOGGER_LEVEL", "INFO"))
 
 HOST = os.getenv("NEST_SERVER_HOST", "127.0.0.1")
-PORT = os.getenv("NEST_SERVER_PORT", "52425")
+PORT = int(os.getenv("NEST_SERVER_PORT", "52425"))
 
 comm = MPI.COMM_WORLD.Clone()
 rank = comm.Get_rank()
 
 
-def log(call_name, msg):
+def mpi_worker_log(call_name: str, msg: str) -> None:
     msg = f"==> WORKER {rank}/{time.time():.7f} ({call_name}): {msg}"
     logger.debug(msg)
 
 
 if rank == 0:
     logger.info("==> Starting NEST Server Master on rank 0")
-    nest_server.set_mpi_comm(comm)
-    nest_server.run_mpi_app(host=opt.get("--host", HOST), port=opt.get("--port", PORT))
+    set_mpi_comm(comm)
+    # run_mpi_app(host=opt.get("--host", HOST), port=opt.get("--port", PORT))
+
+    app = create_app()
+    # NEST crashes with a segmentation fault if the number of threads is changed
+    # from the outside. Calling run() with threaded=False prevents Flask from
+    # performing such changes.
+    app.run(host=opt.get("--host", HOST), port=opt.get("--port", PORT), threaded=False)
 
 else:
     logger.info(f"==> Starting NEST Server Worker on rank {rank}")
-    nest_server.set_mpi_comm(comm)
+    set_mpi_comm(comm)
 
     while True:
-        log("spinwait", "waiting for call bcast")
+        mpi_worker_log("spinwait", "waiting for call bcast")
         call_name = comm.bcast(None, root=0)
 
-        log(call_name, "received call bcast, waiting for data bcast")
+        mpi_worker_log(call_name, "received call bcast, waiting for data bcast")
         data = comm.bcast(None, root=0)
 
-        log(call_name, f"received data bcast, data={data}")
+        mpi_worker_log(call_name, f"received data bcast, data={data}")
         args, kwargs = data
 
-        # log("spinwait", "waiting for bcast")
+        # mpi_worker_log("spinwait", "waiting for bcast")
         # call_name, args, kwargs = comm.bcast(None, root=0)
-        # log(call_name, f"received bcast, data={(args, kwargs)}")
+        # mpi_worker_log(call_name, f"received bcast, data={(args, kwargs)}")
 
         if call_name == "exec":
-            response = nest_server.do_exec(args, kwargs)
+            response = do_exec(args, kwargs)
         else:
-            call, args, kwargs = nest_server.nestify(call_name, args, kwargs)
-            log(call_name, f"local call, args={args}, kwargs={kwargs}")
+            call, args, kwargs = nestify(call_name, args, kwargs)
+            mpi_worker_log(call_name, f"local call, args={args}, kwargs={kwargs}")
 
             # The following exception handler is useful if an error
             # occurs simulataneously on all processes. If only a
@@ -97,34 +108,16 @@ else:
             # to mismatching MPI communication calls is inevitable on
             # the next call.
             try:
-                if call_name == "GetStatus":
-                    nodes_or_conns = kwargs.get("nodes_or_conns", args[0])
-
-                    keys = kwargs.get("keys", None)
-                    if len(args) >= 2:
-                        keys = args[1]
-
-                    response = nodes_or_conns.get(keys) if keys else nodes_or_conns.get()
-
-                elif call_name == "SetStatus":
-                    nodes_or_conns = kwargs.get("nodes_or_conns", args[0])
-
-                    params = kwargs.get("params", {})
-                    if len(args) >= 2:
-                        params = args[1]
-
-                    response = nodes_or_conns.set(params)
-
-                else:
-                    response = call(*args, **kwargs)
+                response = do_call(call, args, kwargs)
+                log("call response", f"{response}")
 
             except Exception as e:  # noqa: BLE001
-                logger.error(f"Failed to execute call: {e}")
+                logger.error(f"Worker - Failed to execute call: {e}")
                 response = None
                 continue
 
-        log(call_name, f"local call - response={response}")
+        # mpi_worker_log(call_name, f"local call - response={response}")
         response = nest.serialize_data(response)
 
-        log(call_name, f"sending response gather, data={response}")
+        mpi_worker_log(call_name, f"sending response gather, data={response}")
         comm.gather(response, root=0)

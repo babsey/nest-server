@@ -1,11 +1,16 @@
+# https://flask.palletsprojects.com/en/stable/testing/
+
 import pytest
 
-from nest_server.main import app as nest_server_app
+from nest_server.main import create_app
+
+nest_server_app = create_app()
 
 
 @pytest.fixture
 def app():
-    nest_server_app.config.update(
+    app = nest_server_app
+    app.config.update(
         {
             "TESTING": True,
         }
@@ -13,7 +18,7 @@ def app():
 
     # other setup can go here
 
-    yield nest_server_app
+    yield app
 
     # clean up / reset resources here
 

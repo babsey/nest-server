@@ -1,6 +1,6 @@
 [project]
 name = "nest-server"
-version = "3.0.0b2"
+version = "3.0.0b3"
 description = "A Python-based API server for the NEST Simulator"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -73,6 +73,12 @@ dev = [
 [build-system]
 requires = ["uv_build>=0.12.7,<0.13.0"]
 build-backend = "uv_build"
+
+[tool.coverage.run]
+omit = [
+  "cli.py",
+  "runner.py",
+]
 
 [tool.ruff]
 # Same as Black.

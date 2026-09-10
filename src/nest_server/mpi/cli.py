@@ -29,7 +29,7 @@ HOST = os.getenv("NEST_SERVER_HOST", "127.0.0.1")
 NUM_PROCESSES = int(os.getenv("NEST_SERVER_MPI_NUM_PROCESSES", "1"))
 PORT = int(os.getenv("NEST_SERVER_PORT", "52425"))
 
-filepath = Path(__file__).parent.resolve() / "prog.py"
+filepath = Path(__file__).parent.resolve() / "runner.py"
 
 
 def main():
@@ -38,7 +38,7 @@ def main():
     parser = argparse.ArgumentParser(description="A MPI server for the NEST Simulator", add_help=False)
     parser.add_argument(
         "operation",
-        choices=["run"],
+        choices=["run", "version"],
     )
 
     parser.add_argument(
@@ -64,7 +64,7 @@ def main():
 
     if args.operation == "run":
         subprocess.run(
-            f"mpirun -n {NUM_PROCESSES} {filepath} --host={HOST} --port={PORT}",
+            f"mpirun -n {NUM_PROCESSES} {filepath} --host {HOST} --port {PORT}",
             shell=True,
             executable="/bin/bash",
             check=True,

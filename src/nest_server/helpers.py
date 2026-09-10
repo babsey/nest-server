@@ -20,6 +20,51 @@
 import os
 
 
+# It comments lines starting with 'import' or 'from' otherwise the line number
+# of error would be wrong.
+def clean_code(source: str) -> str:
+    codes = source.split("\n")
+    codes_cleaned = []
+
+    for code in codes:
+        if code.startswith(("import", "from")):
+            codes_cleaned.append("#" + code)
+        else:
+            codes_cleaned.append(code)
+
+    return "\n".join(codes_cleaned)
+
+
+def get_arguments(request):
+    """Get arguments from the request."""
+    args, kwargs = [], {}
+    if request.is_json:
+        json = request.get_json()
+
+        if isinstance(json, str) and len(json) > 0:
+            args = [json]
+        elif isinstance(json, list):
+            args = json
+        elif isinstance(json, dict):
+            kwargs = json
+            if "args" in kwargs:
+                args = kwargs.pop("args")
+
+    elif len(request.form) > 0:
+        if "args" in request.form:
+            args = request.form.getlist("args")
+        else:
+            kwargs = request.form.to_dict()
+
+    elif len(request.args) > 0:
+        if "args" in request.args:
+            args = request.args.getlist("args")
+        else:
+            kwargs = request.args.to_dict()
+
+    return list(args), kwargs
+
+
 def get_boolean_environ(env_key: str, default_value: str = "false") -> bool:
     env_value = os.environ.get(env_key, default_value)
     return env_value.lower() in ("1", "t", "true", "y", "yes")
