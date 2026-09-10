@@ -4,7 +4,7 @@
 
 Usage:
   runner --help
-  mpirun -np N runner [--host HOST] [--port PORT]
+  mpirun -n N runner [--host HOST] [--port PORT]
 
 Options:
   -h --help     display usage information and exit
