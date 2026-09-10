@@ -70,7 +70,6 @@ def mpi_worker_log(call_name: str, msg: str) -> None:
 if rank == 0:
     logger.info("==> Starting NEST Server Master on rank 0")
     set_mpi_comm(comm)
-    # run_mpi_app(host=opt.get("--host", HOST), port=opt.get("--port", PORT))
 
     app = create_app()
     # NEST crashes with a segmentation fault if the number of threads is changed
