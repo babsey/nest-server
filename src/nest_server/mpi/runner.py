@@ -3,8 +3,8 @@
 """A MPI Server for the NEST Simulator.
 
 Usage:
-  prog --help
-  mpirun -n N prog [--host HOST] [--port PORT]
+  runner --help
+  mpirun -np N runner [--host HOST] [--port PORT]
 
 Options:
   -h --help     display usage information and exit
@@ -91,13 +91,13 @@ else:
             # subset of processes raises an exception, a deadlock due
             # to mismatching MPI communication calls is inevitable on
             # the next call.
-            # try:
-            response = do_call(call, args, kwargs)
+            try:
+                response = do_call(call, args, kwargs)
 
-            # except Exception as e:
-            #     logger.error(f"Failed to execute call: {e}")
-            #     response = None
-            #     continue
+            except Exception as e:  # noqa: BLE001
+                logger.error(f"Worker - Failed to execute call: {e}")
+                response = None
+                continue
 
         # mpi_worker_log(rank, call_name, f"local call - response={response}")
         response = nest.serialize_data(response)
