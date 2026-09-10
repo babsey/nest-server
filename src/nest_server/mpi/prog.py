@@ -3,9 +3,11 @@
 """A MPI Server for the NEST Simulator.
 
 Usage:
-  mpirun -n N <file> [--host HOST] [--port PORT]
+  prog --help
+  mpirun -n N prog [--host HOST] [--port PORT]
 
 Options:
+  -h --help     display usage information and exit
   --host HOST   use hostname/IP address HOST for server [default: 127.0.0.1]
   --port PORT   use port PORT for opening the socket [default: 52425]
 """
@@ -102,7 +104,7 @@ else:
                     if len(args) >= 2:
                         keys = args[1]
 
-                    response = nodes_or_conns.get() if keys else nodes_or_conns.get(keys)
+                    response = nodes_or_conns.get(keys) if keys else nodes_or_conns.get()
 
                 elif call_name == "SetStatus":
                     nodes_or_conns = kwargs.get("nodes_or_conns", args[0])
