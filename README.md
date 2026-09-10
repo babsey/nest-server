@@ -65,17 +65,14 @@ NEST_SERVER_MODULES="import nest"
 
 We recommend to use virtual environment, e.g. with `uv`:
 
-Install `nest-server` as an editable package
-
-```
-uv pip install -e .
-```
-
-Run nest-server
+Run nest-server in an virtual environment
 
 ```
 uv run nest-server start
 ```
+
+See more commands in `Makefile`.
+
 
 ### References
 
