@@ -47,7 +47,7 @@ from nest_server.main import create_app
 from nest_server.mpi.state import set_mpi_comm
 
 HOST = os.getenv("NEST_SERVER_HOST", "127.0.0.1")
-PORT = os.getenv("NEST_SERVER_PORT", "52425")
+PORT = int(os.getenv("NEST_SERVER_PORT", "52425"))
 
 comm = MPI.COMM_WORLD.Clone()
 rank = comm.Get_rank()
