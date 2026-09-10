@@ -136,7 +136,7 @@ def main():
         print("Use CTRL + C to stop this service.")
         print(len(msg) * "-")
 
-        StandaloneApplication("nest_server.main:app", options).run()
+        StandaloneApplication("nest_server.main:create_app()", options).run()
 
     elif args.operation == "stop":
         pid = load_pid(PIDFILE)
