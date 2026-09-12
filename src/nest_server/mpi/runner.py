@@ -46,8 +46,8 @@ import nest
 from flask.logging import default_handler
 
 from nest_server.kernel import do_call, do_exec, nestify
-from nest_server.logger import log
 from nest_server.main import create_app
+from nest_server.mpi.main import worker_receive_bcast, worker_send_gather
 from nest_server.mpi.state import set_mpi_comm
 
 # NOTE: It is important that the logger for worker is placed here.
@@ -82,24 +82,13 @@ else:
     set_mpi_comm(comm)
 
     while True:
-        mpi_worker_log("spinwait", "waiting for call bcast")
-        call_name = comm.bcast(None, root=0)
-
-        mpi_worker_log(call_name, "received call bcast, waiting for data bcast")
-        data = comm.bcast(None, root=0)
-
-        mpi_worker_log(call_name, f"received data bcast, data={data}")
-        args, kwargs = data
-
-        # mpi_worker_log("spinwait", "waiting for bcast")
-        # call_name, args, kwargs = comm.bcast(None, root=0)
-        # mpi_worker_log(call_name, f"received bcast, data={(args, kwargs)}")
+        call_name, args, kwargs = worker_receive_bcast(mpi_worker_log, comm)
 
         if call_name == "exec":
             response = do_exec(args, kwargs)
         else:
             call, args, kwargs = nestify(call_name, args, kwargs)
-            mpi_worker_log(call_name, f"local call, args={args}, kwargs={kwargs}")
+            logger.debug(f"{call_name} - local call, args={args}, kwargs={kwargs}")
 
             # The following exception handler is useful if an error
             # occurs simulataneously on all processes. If only a
@@ -108,15 +97,10 @@ else:
             # the next call.
             try:
                 response = do_call(call, args, kwargs)
-                log("call response", f"{response}")
 
             except Exception as e:  # noqa: BLE001
                 logger.error(f"Worker - Failed to execute call: {e}")
                 response = None
                 continue
 
-        # mpi_worker_log(call_name, f"local call - response={response}")
-        response = nest.serialize_data(response)
-
-        mpi_worker_log(call_name, f"sending response gather, data={response}")
-        comm.gather(response, root=0)
+        worker_send_gather(mpi_worker_log, comm, call_name, nest.serialize_data(response))

@@ -18,21 +18,29 @@
 # along with NEST.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
+import logging
+import os
 
 from flask import Flask, abort, jsonify, request
+from flask.logging import default_handler
 from flask_cors import CORS
 
 from nest_server.handler import ErrorHandler
 from nest_server.helpers import get_arguments
 from nest_server.kernel import api_client, master_call, nest_calls, nest_version
-from nest_server.logger import log
-from nest_server.mpi.state import mpi_comm
+from nest_server.mpi.state import has_mpi_comm
 from nest_server.security import ACCESS_TOKEN, AUTH_DISABLED, CORS_ORIGINS, EXEC_CALL_ENABLED, _check_security
+
+# This ensures that the logging information shows up in the console running the server,
+# even when Flask's event loop is running.
+logger = logging.getLogger(__name__)
+logger.addHandler(default_handler)
+logger.setLevel(os.getenv("NEST_SERVER_LOGGER_LEVEL", "INFO"))
 
 
 def create_app():
 
-    app = Flask(__name__, instance_relative_config=True)
+    app = Flask(__name__)
 
     # Inform client-side user agents that they should not attempt to call our
     # server from any non-whitelisted domain.
@@ -117,7 +125,7 @@ def create_app():
 
         # DON'T LINT! Intentional bare except clause! Even `KeyboardInterrupt` and
         # `SystemExit` exceptions should not bypass authentication!
-        except Exception:  # noqa
+        except Exception:  # noqa: BLE001
             return ("Unauthorized", 403)
 
     print(80 * "*")
@@ -132,12 +140,14 @@ def create_app():
 
     @app.route("/", methods=["GET"])
     def index():
-        return jsonify(
-            {
-                "nest": nest_version,
-                "mpi": mpi_comm is not None,
-            }
-        )
+        """Route to get NEST version and mpi option."""
+
+        response = {
+            "nest": nest_version,
+            "mpi": has_mpi_comm(),
+        }
+
+        return jsonify(response)
 
     @app.route("/api", methods=["GET"])
     def route_api():
@@ -149,23 +159,25 @@ def create_app():
     def route_api_call(call: str):
         """Route to call function in NEST."""
 
-        print(f"\n{'=' * 40}\n", flush=True)
         args, kwargs = get_arguments(request)
-        log("route_api_call", f"call={call}, args={args}, kwargs={kwargs}")
+        logger.debug(f"route_api_call - call={call}, args={args}, kwargs={kwargs}")
+
         return jsonify(api_client(call, args, kwargs))
 
     @app.route("/exec", methods=["GET", "POST"])
     def route_exec():
         """Route to execute script in Python."""
 
-        if EXEC_CALL_ENABLED:
-            args, kwargs = get_arguments(request)
-            response = master_call("exec", args, kwargs)
-            return jsonify(response)
-        else:
+        if not EXEC_CALL_ENABLED:
             abort(
                 403,
                 "The route `/exec` has been disabled. Please contact the server administrator.",
             )
+
+        args, kwargs = get_arguments(request)
+        logger.debug(f"route_exec - args={args}, kwargs={kwargs}")
+
+        response = master_call("exec", args, kwargs)
+        return jsonify(response)
 
     return app

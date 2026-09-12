@@ -28,6 +28,7 @@ from nest_server import __version__
 HOST = os.getenv("NEST_SERVER_HOST", "127.0.0.1")
 NUM_PROCESSES = int(os.getenv("NEST_SERVER_MPI_NUM_PROCESSES", "1"))
 PORT = int(os.getenv("NEST_SERVER_PORT", "52425"))
+LOGFILE = os.getenv("NEST_SERVER_MPI_LOGFILE", "/tmp/nest-server-mpi.log")
 
 filepath = Path(__file__).parent.resolve() / "runner.py"
 
@@ -38,7 +39,7 @@ def main():
     parser = argparse.ArgumentParser(description="A MPI server for the NEST Simulator", add_help=False)
     parser.add_argument(
         "operation",
-        choices=["run", "version"],
+        choices=["log", "pid", "start", "stop", "version"],
     )
 
     parser.add_argument(
@@ -62,13 +63,42 @@ def main():
     if args.port:
         PORT = args.port
 
-    if args.operation == "run":
-        subprocess.run(
-            f"mpirun -n {NUM_PROCESSES} {filepath} --host {HOST} --port {PORT}",
-            shell=True,
-            executable="/bin/bash",
-            check=True,
-        )
+    match args.operation:
+        case "log":
+            subprocess.run(f"tail -f {LOGFILE}", shell=True, executable="/bin/bash", check=True)
 
-    elif args.operation == "version":
-        print(__version__)
+        case "pid":
+            try:
+                subprocess.run(
+                    f"pgrep -fo '{filepath} --host {HOST} --port {PORT}'",
+                    shell=True,
+                    executable="/bin/bash",
+                    check=True,
+                )
+            except Exception:  # noqa: BLE001
+                print("No such process")
+
+        case "start":
+            with open(LOGFILE, "w") as logfile:
+                subprocess.run(
+                    f"mpirun -n {NUM_PROCESSES} {filepath} --host {HOST} --port {PORT}",
+                    shell=True,
+                    executable="/bin/bash",
+                    check=True,
+                    stdout=logfile,
+                )
+
+        case "stop":
+            try:
+                subprocess.run(
+                    f"pgrep -fo '{filepath} --host {HOST} --port {PORT}' | xargs kill",
+                    shell=True,
+                    executable="/bin/bash",
+                    check=True,
+                )
+                print(f"NEST Server MPI running at http://{HOST}:{PORT} has stopped.")
+            except Exception:  # noqa: BLE001
+                print(f"NEST Server MPI is not running at http://{HOST}:{PORT}.")
+
+        case "version":
+            print(__version__)

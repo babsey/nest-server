@@ -35,9 +35,10 @@ def clean_code(source: str) -> str:
     return "\n".join(codes_cleaned)
 
 
-def get_arguments(request):
+def get_arguments(request) -> tuple[list, dict]:
     """Get arguments from the request."""
     args, kwargs = [], {}
+
     if request.is_json:
         json = request.get_json()
 

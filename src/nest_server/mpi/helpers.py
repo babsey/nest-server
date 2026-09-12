@@ -17,76 +17,79 @@
 # You should have received a copy of the GNU General Public License
 # along with NEST.  If not, see <http://www.gnu.org/licenses/>.
 
-from nest_server.logger import log
+import logging
+import os
+
+from flask.logging import default_handler
+
+logger = logging.getLogger(__name__)
+logger.addHandler(default_handler)
+logger.setLevel(os.getenv("NEST_SERVER_LOGGER_LEVEL", "INFO"))
 
 
-def combine(response: list | None) -> dict | list | None:
-    """Combine responses from different MPI processes.
+def combine(data: list | None) -> dict | list | None:
+    """Combine data from different MPI processes.
 
     In a distributed scenario, each MPI process creates its own share
-    of the response from the data available locally. To present a
+    of the data from the data available locally. To present a
     coherent view on the reponse data for the caller, this data has to
     be combined.
 
     If this function is run serially (i.e., without MPI), it just
-    returns the response data from the only process immediately.
+    returns the data data from the only process immediately.
 
     The type of the returned result can vary depending on the call
     that produced it.
 
     The combination of results is based on a cascade of heuristics
     based on the call that was issued and individual repsonse data:
-      * if all responses are None, the combined response will also just
+      * if all data are None, the combined data will also just
         be None
-      * for some specific calls, the responses are known to be the
+      * for some specific calls, the data are known to be the
         same from the master and all workers. In this case, the
-        combined response is just the master response
-      * if the response list contains only a single actual response and
-        None otherwise, the combined response will be that one actual
-        response
+        combined data is just the master data
+      * if the data list contains only a single actual data and
+        None otherwise, the combined data will be that one actual
+        data
       * for calls to GetStatus on recording devices, the combined
-        response will be a merged dictionary in the sense that all
-        fields that contain a single value in the individual responsed
+        data will be a merged dictionary in the sense that all
+        fields that contain a single value in the individual datad
         are kept as a single values, while lists will be appended in
-        order of appearance; dictionaries in the response are
+        order of appearance; dictionaries in the data are
         recursively treated in the same way
-      * for calls to GetStatus on neurons, the combined response is just
+      * for calls to GetStatus on neurons, the combined data is just
         the single dictionary returned by the process on which the
         neuron is actually allocated
-      * if the response contains one list per process, the combined
-        response will be those lists concatenated and flattened.
+      * if the data contains one list per process, the combined
+        data will be those lists concatenated and flattened.
 
     """
-    log("combine", f"{response}")
+    logger.debug(f"combine - {data}")
 
-    if response is None:
+    # If data is None
+    if data is None:
         return None
 
     # Filter out None values from the list
-    if isinstance(response, list):
-        response = [r for r in response if r is not None]
+    if isinstance(data, list):
+        data = [r for r in data if r is not None]
 
-    # Return None if response is None or all items of the list are None.
-    if len(response) == 0 or all(v is None for v in response):
+    # Return None if data is None or all items of the list are None.
+    if len(data) == 0 or all(v is None for v in data):
         return None
 
-    if len(response) == 1 or response[0] == response[1]:
-        return response[0]
+    if len(data) == 1 or data[0] == data[1]:
+        return data[0]
 
-    # return the master response if all responses are known to be the same
-    if all(isinstance(v, (list, tuple)) for v in response):
-        # return combine([v[0] for v in response])
-        return [v_j for v_i in list(zip(*response, strict=True)) for v_j in v_i if v_j is not None]
+    # if all data are known to be the same
+    if all(isinstance(v, (list, tuple)) for v in data):
+        return [v_j for v_i in list(zip(*data, strict=True)) for v_j in v_i if v_j is not None]
 
     # return a single merged dictionary if there are many of them
-    if all(isinstance(v, dict) for v in response):
-        return merge_dicts(response)
+    if all(isinstance(v, dict) for v in data):
+        return merge_dicts(data)
 
-    return response
-
-    # log("combine()", f"ERROR: cannot combine response={response}")
-    # msg = "Cannot combine data because of unknown reason"
-    # raise Exception(msg)  # pylint: disable=W0719
+    return data
 
 
 def merge_dicts(data: list[dict]) -> dict:
@@ -100,6 +103,7 @@ def merge_dicts(data: list[dict]) -> dict:
         merged dict
 
     """
+    logger.debug(f"merge - {data}")
 
     # Merge status of recorder
     if all("n_events" in d for d in data):
@@ -158,4 +162,5 @@ def merge_dicts(data: list[dict]) -> dict:
             else:
                 merged[k].append(v)
 
+    logger.debug(f"merged - {data}")
     return merged

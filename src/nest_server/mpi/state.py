@@ -20,6 +20,14 @@
 mpi_comm = None
 
 
+def get_mpi_comm():
+    return mpi_comm
+
+
+def has_mpi_comm():
+    return mpi_comm is not None
+
+
 def set_mpi_comm(comm):
     global mpi_comm
     mpi_comm = comm

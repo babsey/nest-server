@@ -17,34 +17,68 @@
 # You should have received a copy of the GNU General Public License
 # along with NEST.  If not, see <http://www.gnu.org/licenses/>.
 
-from nest_server.logger import mpi_master_log
-from nest_server.mpi.helpers import combine
-from nest_server.mpi.state import mpi_comm
 
-
-def mpi_receive_response_gather(call_name: str, master_response):
-    if mpi_comm is None:
+def master_receive_gather(master_log, comm, call_name: str, response):
+    if comm is None:
         return
 
-    mpi_master_log(call_name, "waiting for response gather")
-    response = mpi_comm.gather(master_response, root=0)
-    mpi_master_log(call_name, f"received response gather, data={response}")
+    # Check if rank is master
+    assert comm.Get_rank() == 0
 
-    return combine(response)
+    master_log(call_name, "waiting for response gather")
+    master_response = comm.gather(response, root=0)
+    master_log(call_name, f"received response gather, data={master_response}")
+
+    return master_response
 
 
-def mpi_send_bcast(call_name: str, args: list, kwargs: dict) -> None:
-    if mpi_comm is None:
+def master_send_bcast(master_log, comm, call_name: str, args: list, kwargs: dict) -> None:
+    if comm is None:
         return
 
-    assert mpi_comm.Get_rank() == 0
+    # Check if rank is master
+    assert comm.Get_rank() == 0
 
-    mpi_master_log(call_name, "sending call bcast")
-    mpi_comm.bcast(call_name, root=0)
+    master_log(call_name, "sending call bcast")
+    comm.bcast(call_name, root=0)
 
     data = (args, kwargs)
-    mpi_master_log(call_name, f"sending data bcast, data={data}")
-    mpi_comm.bcast(data, root=0)
+    master_log(call_name, f"sending data bcast, data={data}")
+    comm.bcast(data, root=0)
 
-    # mpi_master_log(call_name, "sending bcast")
-    # mpi_comm.bcast((call_name, args, kwargs), root=0)
+    # master_log(call_name, "sending bcast")
+    # comm.bcast((call_name, args, kwargs), root=0)
+
+
+def worker_receive_bcast(worker_log, comm):
+    if comm is None:
+        return
+
+    # Check if rank is not master
+    assert comm.Get_rank() > 0
+
+    worker_log("spinwait", "waiting for call bcast")
+    call_name = comm.bcast(None, root=0)
+
+    worker_log(call_name, "received call bcast, waiting for data bcast")
+    data = comm.bcast(None, root=0)
+
+    worker_log(call_name, f"received data bcast, data={data}")
+    args, kwargs = data
+
+    # worker_log("spinwait", "waiting for bcast")
+    # call_name, args, kwargs = comm.bcast(None, root=0)
+    # worker_log(call_name, f"received bcast, data={(args, kwargs)}")
+
+    return call_name, args, kwargs
+
+
+def worker_send_gather(worker_log, comm, call_name: str, response) -> None:
+    if comm is None:
+        return
+
+    # Check if rank is not master
+    assert comm.Get_rank() > 0
+
+    worker_log(call_name, f"sending response gather, data={response}")
+    comm.gather(response, root=0)

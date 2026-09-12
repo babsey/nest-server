@@ -19,16 +19,24 @@
 
 
 import inspect
+import logging
+import os
+import time
 
 import nest
 import RestrictedPython
+from flask.logging import default_handler
 
 from nest_server.handler import Capturing, get_or_error
 from nest_server.helpers import clean_code
-from nest_server.logger import log, logger, mpi_master_log
-from nest_server.mpi.main import mpi_receive_response_gather, mpi_send_bcast
-from nest_server.mpi.state import mpi_comm
+from nest_server.mpi.helpers import combine
+from nest_server.mpi.main import master_receive_gather, master_send_bcast
+from nest_server.mpi.state import get_mpi_comm
 from nest_server.security import RESTRICTION_DISABLED, get_modules_from_env, get_restricted_globals
+
+logger = logging.getLogger(__name__)
+logger.addHandler(default_handler)
+logger.setLevel(os.getenv("NEST_SERVER_LOGGER_LEVEL", "INFO"))
 
 nest_calls = dir(nest)
 nest_calls = list(filter(lambda x: not x.startswith("_"), nest_calls))
@@ -38,9 +46,15 @@ nest_types = [nest.NodeCollection, nest.SynapseCollection]
 nest_version = nest.build_info["version"]
 
 
+def mpi_master_log(call_name: str, msg: str) -> None:
+    msg = f"==> MASTER 0/{time.time():.7f} ({call_name}): {msg}"
+    logger.debug(msg)
+
+
 @get_or_error
 def api_client(call_name: str, args: list, kwargs: dict) -> dict | None:
     """API Client to call function in NEST."""
+    logger.debug(f"api_client - {call_name}, {args}, {kwargs}")
 
     call = getattr(nest, call_name)
 
@@ -57,7 +71,7 @@ def api_client(call_name: str, args: list, kwargs: dict) -> dict | None:
 
 
 def do_call(call, args: list, kwargs: dict):
-    log("do_call", f"{call.__name__}, {args}, {kwargs}")
+    logger.debug(f"do_call - {call.__name__}({args}, {kwargs})")
 
     if call.__name__ == "GetStatus":
         nodes_or_conns = kwargs.get("nodes_or_conns", [])
@@ -68,7 +82,7 @@ def do_call(call, args: list, kwargs: dict):
         if len(args) >= 2:
             keys = args[1]
 
-        # log("GetStatus", f"{nodes_or_conns}.get({keys})")
+        logger.debug(f"GetStatus - {nodes_or_conns}.get({keys})")
         response = nodes_or_conns.get(keys) if keys else nodes_or_conns.get()
 
     elif call.__name__ == "SetStatus":
@@ -80,7 +94,7 @@ def do_call(call, args: list, kwargs: dict):
         if len(args) >= 2:
             params = args[1]
 
-        # log("SetStatus", f"{nodes_or_conns}.set({params})")
+        logger.debug(f"SetStatus - {nodes_or_conns}.set({params})")
         response = nodes_or_conns.set(params)
 
     else:
@@ -149,8 +163,10 @@ def master_call(call_name: str, args: list | None = None, kwargs: dict | None = 
     if kwargs is None:
         kwargs = {}
 
+    mpi_comm = get_mpi_comm()
+
     if mpi_comm is not None:
-        mpi_send_bcast(call_name, args, kwargs)
+        master_send_bcast(mpi_master_log, mpi_comm, call_name, args, kwargs)
 
     if call_name == "exec":
         response = do_exec(args, kwargs)
@@ -160,21 +176,23 @@ def master_call(call_name: str, args: list | None = None, kwargs: dict | None = 
 
         try:
             response = do_call(call, args, kwargs)
-            log("call response", f"{response}")
+            logger.debug(f"call response - {response}")
 
         except Exception as e:  # noqa: BLE001
             logger.error(f"Master - Failed to execute call: {e}")
             response = None
 
     if mpi_comm is not None:
-        return mpi_receive_response_gather(call_name, nest.serialize_data(response))
+        response = combine(master_receive_gather(mpi_master_log, mpi_comm, call_name, nest.serialize_data(response)))
+        logger.debug(f"combined - {response}")
+        return response
 
     return nest.serialize_data(response)
 
 
-def nestify(call_name: str, args: list, kwargs: dict):
+def nestify(call_name: str, args: list, kwargs: dict) -> tuple:
     """Get the NEST API call and convert arguments if neccessary."""
-    log("nestify", f"{args}, {kwargs}")
+    logger.debug(f"nestify - {call_name}, {args}, {kwargs}")
 
     call = getattr(nest, call_name)
     objectnames = ["nodes", "nodes_or_conns", "pre", "post", "source", "target"]
@@ -189,6 +207,6 @@ def nestify(call_name: str, args: list, kwargs: dict):
         #     if key == "params":
         #         kwargs[key] = {k: mpi_comm.scatter(value, root=0) for (k, v) in value.items()}
 
-    log("nestified", f"{args}, {kwargs}")
+    logger.debug(f"nestified - {call}, {args}, {kwargs}")
 
     return call, args, kwargs

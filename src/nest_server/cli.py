@@ -21,7 +21,6 @@ import argparse
 import os
 import subprocess
 import sys
-from pathlib import Path
 
 from gunicorn.app.wsgiapp import WSGIApplication
 
@@ -37,22 +36,8 @@ STDOUT = get_boolean_environ("NEST_SERVER_STDOUT")
 TIMEOUT = int(os.getenv("NEST_SERVER_TIMEOUT", "30"))
 WORKERS = int(os.getenv("NEST_SERVER_WORKERS", "1"))
 
-
-def load_pid():
-    if not Path(PIDFILE).exists():
-        return
-
-    with open(PIDFILE) as f:
-        pid = int(f.readline())
-
-    return pid
-
-
-def remove_pidfile():
-    if not Path(PIDFILE).exists():
-        return
-
-    return os.remove(Path(PIDFILE))
+app = "nest_server.main:create_app()"
+cli = "nest-server"
 
 
 class StandaloneApplication(WSGIApplication):
@@ -115,47 +100,41 @@ def main():
     if args.workers:
         WORKERS = args.workers
 
-    if args.operation == "log":
-        subprocess.run(f"tail -f {LOGFILE}", shell=True, executable="/bin/bash", check=True)
+    match args.operation:
+        case "log":
+            subprocess.run(f"tail -f {LOGFILE}", shell=True, executable="/bin/bash", check=True)
 
-    elif args.operation == "pid":
-        pid = load_pid()
-
-        if pid:
-            print(pid)
-        else:
-            print("No such process")
-
-    elif args.operation == "start":
-        options = {
-            "bind": f"{HOST}:{PORT}",
-            "capture_output": not STDOUT,
-            "daemon": DAEMON,
-            "errorlog": LOGFILE,
-            "pidfile": PIDFILE,
-            "timeout": TIMEOUT,
-            "workers": WORKERS,
-            # "worker_class": "uvicorn.workers.UvicornWorker",
-        }
-
-        msg = f"NEST Server is now running at http://{HOST}:{PORT}."
-        print(msg)
-        print("Use CTRL + C to stop this service.")
-        print(len(msg) * "-")
-
-        StandaloneApplication("nest_server.main:create_app()", options).run()
-
-    elif args.operation == "stop":
-        pid = load_pid()
-
-        if pid:
+        case "pid":
             try:
-                subprocess.run(f"kill {pid}", shell=True, executable="/bin/bash", check=True)
-                print(f"NEST Server running at http://{HOST}:{PORT} has stopped.")
-            except subprocess.CalledProcessError:
-                remove_pidfile()
-        else:
-            print(f"NEST Server is not running at http://{HOST}:{PORT}.")
+                subprocess.run(f"pgrep -fo '{cli} start'", shell=True, executable="/bin/bash", check=True)
+            except Exception:  # noqa: BLE001
+                print("No such process")
 
-    elif args.operation == "version":
-        print(__version__)
+        case "start":
+            options = {
+                "bind": f"{HOST}:{PORT}",
+                "capture_output": not STDOUT,
+                "daemon": DAEMON,
+                "errorlog": LOGFILE,
+                "pidfile": PIDFILE,
+                "timeout": TIMEOUT,
+                "workers": WORKERS,
+                # "worker_class": "uvicorn.workers.UvicornWorker",
+            }
+
+            msg = f"NEST Server is now running at http://{HOST}:{PORT}."
+            print(msg)
+            print("Use CTRL + C to stop this service.")
+            print(len(msg) * "-")
+
+            StandaloneApplication(app, options).run()
+
+        case "stop":
+            try:
+                subprocess.run(f"pgrep -fo '{cli} start' | xargs kill", shell=True, executable="/bin/bash", check=True)
+                print(f"NEST Server running at http://{HOST}:{PORT} has stopped.")
+            except Exception:  # noqa: BLE001
+                print(f"NEST Server is not running at http://{HOST}:{PORT}.")
+
+        case "version":
+            print(__version__)
