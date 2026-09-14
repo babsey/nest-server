@@ -20,6 +20,7 @@
 import io
 import sys
 import traceback
+from collections.abc import Callable
 
 
 class Capturing(list):
@@ -75,10 +76,10 @@ def get_lineno(err: Exception, tb_idx: int):
     return lineno
 
 
-def get_or_error(func):
+def get_or_error(func: Callable) -> Callable:
     """Wrapper to get data and status."""
 
-    def func_wrapper(call, *args, **kwargs):
+    def func_wrapper(call: Callable, *args, **kwargs):
         try:
             return func(call, *args, **kwargs)
 

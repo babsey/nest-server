@@ -33,7 +33,7 @@ LOGFILE = os.getenv("NEST_SERVER_MPI_LOGFILE", "/tmp/nest-server-mpi.log")
 filepath = Path(__file__).parent.resolve() / "runner.py"
 
 
-def main():
+def main() -> None:
     global HOST, PORT, NUM_PROCESSES
 
     parser = argparse.ArgumentParser(description="A MPI server for the NEST Simulator", add_help=False)

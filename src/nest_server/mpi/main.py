@@ -17,11 +17,15 @@
 # You should have received a copy of the GNU General Public License
 # along with NEST.  If not, see <http://www.gnu.org/licenses/>.
 
+from collections.abc import Callable
 
-def master_receive_gather(master_log, comm, call_name: str, response):
-    if comm is None:
-        return
+try:
+    from mpi4py.MPI import Comm
+except ImportError:
+    Comm = object
 
+
+def master_receive_gather(master_log: Callable, comm: Comm, call_name: str, response):
     # Check if rank is master
     assert comm.Get_rank() == 0
 
@@ -32,10 +36,7 @@ def master_receive_gather(master_log, comm, call_name: str, response):
     return master_response
 
 
-def master_send_bcast(master_log, comm, call_name: str, args: list, kwargs: dict) -> None:
-    if comm is None:
-        return
-
+def master_send_bcast(master_log: Callable, comm: Comm, call_name: str, args: list, kwargs: dict) -> None:
     # Check if rank is master
     assert comm.Get_rank() == 0
 
@@ -50,10 +51,7 @@ def master_send_bcast(master_log, comm, call_name: str, args: list, kwargs: dict
     # comm.bcast((call_name, args, kwargs), root=0)
 
 
-def worker_receive_bcast(worker_log, comm):
-    if comm is None:
-        return
-
+def worker_receive_bcast(worker_log: Callable, comm: Comm) -> tuple[str, list, dict]:
     # Check if rank is not master
     assert comm.Get_rank() > 0
 
@@ -73,10 +71,7 @@ def worker_receive_bcast(worker_log, comm):
     return call_name, args, kwargs
 
 
-def worker_send_gather(worker_log, comm, call_name: str, response) -> None:
-    if comm is None:
-        return
-
+def worker_send_gather(worker_log: Callable, comm: Comm, call_name: str, response) -> None:
     # Check if rank is not master
     assert comm.Get_rank() > 0
 

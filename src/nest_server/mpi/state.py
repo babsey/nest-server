@@ -17,17 +17,22 @@
 # You should have received a copy of the GNU General Public License
 # along with NEST.  If not, see <http://www.gnu.org/licenses/>.
 
+try:
+    from mpi4py.MPI import Comm
+except ImportError:
+    Comm = object
+
 mpi_comm = None
 
 
-def get_mpi_comm():
+def get_mpi_comm() -> Comm | None:
     return mpi_comm
 
 
-def has_mpi_comm():
+def has_mpi_comm() -> bool:
     return mpi_comm is not None
 
 
-def set_mpi_comm(comm):
+def set_mpi_comm(comm: Comm) -> None:
     global mpi_comm
     mpi_comm = comm

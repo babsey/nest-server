@@ -38,7 +38,7 @@ logger.addHandler(default_handler)
 logger.setLevel(os.getenv("NEST_SERVER_LOGGER_LEVEL", "INFO"))
 
 
-def create_app():
+def create_app() -> Flask:
 
     app = Flask(__name__)
 
@@ -52,7 +52,7 @@ def create_app():
         return jsonify(e.to_dict()), e.status_code
 
     @app.before_request
-    def _setup_auth():
+    def _setup_auth() -> tuple[str, int] | None:
         """
         Authentication function that generates and validates the NESTServerAuth
         header with a bearer token.

@@ -22,6 +22,7 @@ import inspect
 import logging
 import os
 import time
+from collections.abc import Callable
 
 import nest
 import RestrictedPython
@@ -70,7 +71,7 @@ def api_client(call_name: str, args: list, kwargs: dict) -> dict | None:
     return nest.serialize_data(response)
 
 
-def do_call(call, args: list, kwargs: dict):
+def do_call(call: Callable, args: list, kwargs: dict):
     logger.debug(f"do_call - {call.__name__}({args}, {kwargs})")
 
     if call.__name__ == "GetStatus":
@@ -190,7 +191,7 @@ def master_call(call_name: str, args: list | None = None, kwargs: dict | None = 
     return nest.serialize_data(response)
 
 
-def nestify(call_name: str, args: list, kwargs: dict) -> tuple:
+def nestify(call_name: str, args: list, kwargs: dict) -> tuple[Callable, list, dict]:
     """Get the NEST API call and convert arguments if neccessary."""
     logger.debug(f"nestify - {call_name}, {args}, {kwargs}")
 

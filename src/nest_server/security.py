@@ -35,7 +35,7 @@ MODULES = os.environ.get("NEST_SERVER_MODULES", "import nest")
 RESTRICTION_DISABLED = get_boolean_environ("NEST_SERVER_DISABLE_RESTRICTION")
 
 
-def _check_security():
+def _check_security() -> None:
     """
     Checks the security level of the NEST Server instance.
     """
@@ -60,7 +60,7 @@ def _check_security():
         print("\n - ".join([" "] + msg) + "\n")
 
 
-def get_restricted_globals(extra_types: list | None = None):
+def get_restricted_globals(extra_types: list | None = None) -> dict:
     """Get restricted globals for exec function."""
 
     if extra_types is None:
@@ -98,7 +98,7 @@ def get_restricted_globals(extra_types: list | None = None):
     return restricted_globals
 
 
-def get_modules_from_env():
+def get_modules_from_env() -> dict:
     """Get modules from environment variable NEST_SERVER_MODULES.
 
     This function converts the content of the environment variable
