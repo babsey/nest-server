@@ -1,0 +1,7 @@
+# Exclude the project virtual environment from image builds
+.venv*
+
+.pytest_cache
+.ruff_cache
+dist
+.coverage
