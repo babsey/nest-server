@@ -42,7 +42,6 @@ options:
 ### Default environment variables
 
 ```
-# nest-server
 NEST_SERVER_DAEMON=false
 NEST_SERVER_HOST="127.0.0.1"
 NEST_SERVER_LOGFILE="/tmp/nest-server.log"
@@ -51,7 +50,6 @@ NEST_SERVER_STDOUT=false
 NEST_SERVER_TIMEOUT=30
 NEST_SERVER_WORKERS=1
 
-# main.py
 NEST_SERVER_ACCESS_TOKEN=""
 NEST_SERVER_DISABLE_AUTH=false
 NEST_SERVER_DISABLE_RESTRICTION=false
@@ -63,6 +61,12 @@ NEST_SERVER_MODULES="import nest"
 ### Development mode
 
 We recommend to use virtual environment, e.g. with `uv`:
+
+Install nest-client as an editable package
+
+```
+uv pip install -e .
+```
 
 Run nest-server in an virtual environment
 
