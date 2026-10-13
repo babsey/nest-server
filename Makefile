@@ -10,10 +10,10 @@ pre-commit:
 	uv run pre-commit run --all-files
 
 test:
-	uv run --env-file .env.test pytest -v
+	uv run --env-file .env.local pytest -v
 
 coverage:
-	uv run --env-file .env.test coverage run --source=./src/nest_server -m pytest
+	uv run --env-file .env.local coverage run --source=./src/nest_server -m pytest
 	uv run coverage report
 
 lint:
@@ -31,4 +31,4 @@ lock-upgrade:
 test-all: $(TEST_PY_TARGETS)
 
 test-py%:
-	UV_PROJECT_ENVIRONMENT=.venv-$* uv run --python $* --env-file .env.test pytest
+	UV_PROJECT_ENVIRONMENT=.venv-$* uv run --python $* --env-file .env.local pytest
