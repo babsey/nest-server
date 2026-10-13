@@ -1,4 +1,4 @@
-FROM ubuntu:24.04
+FROM ubuntu:26.04
 LABEL maintainer="Sebastian Spreizer <spreizer@web.de>"
 
 # The installer requires curl (and certificates) to download the release archive

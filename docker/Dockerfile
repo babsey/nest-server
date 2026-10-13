@@ -1,4 +1,4 @@
-FROM ubuntu:24.04
+FROM ubuntu:26.04
 LABEL maintainer="Sebastian Spreizer <spreizer@web.de>"
 
 # The installer requires curl (and certificates) to download the release archive
@@ -25,12 +25,12 @@ ENV VIRTUAL_ENV=/opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 RUN --mount=type=cache,target=/root/.cache/uv \
-  uv pip install nest-server==3.0.0b6
+  uv pip install nest-server==3.0.0b7
 
 # NOTE: These lines can be removed for NEST Simulator 3.11 or up.
 # Otherwise it will use build-in nest-server command from NEST Simulator.
 RUN rm /opt/venv/bin/nest-server*
-RUN uv pip install --reinstall --no-deps nest-server==3.0.0b6
+RUN uv pip install --reinstall --no-deps nest-server==3.0.0b7
 
 # Health check: curl the endpoint every 30 seconds
 # -f flag fails silently on HTTP errors (4xx, 5xx)
