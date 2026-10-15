@@ -28,9 +28,9 @@ jobs:
           uv run --env-file .env.local coverage run --source=./src/nest_server -m pytest
           uv run coverage report
 
-  pytest-all:
+  pytest:
     runs-on: ubuntu-latest
-    needs: [coverage]
+    needs: coverage
     strategy:
       matrix:
         python-version:
