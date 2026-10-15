@@ -25,14 +25,14 @@ import sys
 from gunicorn.app.wsgiapp import WSGIApplication
 
 from nest_server import __version__
-from nest_server.helpers import get_boolean_environ
+from nest_server.helpers import str2bool
 
-DAEMON = get_boolean_environ("NEST_SERVER_DAEMON")
+DAEMON = str2bool(os.getenv("NEST_SERVER_DAEMON"))
 HOST = os.getenv("NEST_SERVER_HOST", "127.0.0.1")
 LOGFILE = os.getenv("NEST_SERVER_LOGFILE", "/tmp/nest-server.log")
 PIDFILE = os.getenv("NEST_SERVER_PIDFILE", "/tmp/nest-server.pid")
 PORT = int(os.getenv("NEST_SERVER_PORT", "52425"))
-STDOUT = get_boolean_environ("NEST_SERVER_STDOUT")
+STDOUT = str2bool(os.getenv("NEST_SERVER_STDOUT"))
 TIMEOUT = int(os.getenv("NEST_SERVER_TIMEOUT", "30"))
 WORKERS = int(os.getenv("NEST_SERVER_WORKERS", "1"))
 

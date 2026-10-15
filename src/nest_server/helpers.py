@@ -17,8 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with NEST.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-
 
 # It comments lines starting with 'import' or 'from' otherwise the line number
 # of error would be wrong.
@@ -66,6 +64,7 @@ def get_arguments(request) -> tuple[list, dict]:
     return list(args), kwargs
 
 
-def get_boolean_environ(env_key: str, default_value: str = "false") -> bool:
-    env_value = os.environ.get(env_key, default_value)
-    return env_value.lower() in ("1", "t", "true", "y", "yes")
+def str2bool(value: str | None = None) -> bool:
+    if value is None:
+        return False
+    return value.lower() in ("1", "t", "true", "y", "yes")
