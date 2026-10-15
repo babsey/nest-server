@@ -55,5 +55,5 @@ jobs:
       - name: Install the project
         run: uv sync
 
-      - name: Run pytest for multiple python versions
+      - name: Run pytest
         run: uv run --env-file .env.local pytest
