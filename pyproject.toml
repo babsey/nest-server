@@ -1,6 +1,6 @@
 [project]
 name = "nest-server"
-version = "3.0.0b7"
+version = "3.0.0b8"
 description = "A Python-based API server for the NEST Simulator"
 readme = "README.md"
 requires-python = ">=3.10"
