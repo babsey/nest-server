@@ -26,6 +26,7 @@ jobs:
       - name: Run coverage with pytest
         run: |
           uv run --env-file .env.local coverage run --source=./src/nest_server -m pytest
+          uv run coverage report
           uv run coverage report --format=markdown >> $GITHUB_STEP_SUMMARY
 
   pytest:
