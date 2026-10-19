@@ -184,7 +184,8 @@ def master_call(call_name: str, args: list | None = None, kwargs: dict | None = 
             response = None
 
     if mpi_comm is not None:
-        response = combine(master_receive_gather(mpi_master_log, mpi_comm, call_name, nest.serialize_data(response)))
+        response = master_receive_gather(mpi_master_log, mpi_comm, call_name, nest.serialize_data(response))
+        response = combine(response)
         logger.debug(f"combined - {response}")
         return response
 
