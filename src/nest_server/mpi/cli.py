@@ -45,7 +45,7 @@ def main() -> None:
     parser.add_argument(
         "-h", "--host", type=str, help="use hostname/IP address <HOST> for the server [default: 127.0.0.1]"
     )
-    parser.add_argument("-n", "-np", type=int, help="number of processes to run [default: 1]")
+    parser.add_argument("-n", "--np", type=int, help="number of processes to run [default: 1]")
     parser.add_argument("-p", "--port", type=int, help="use port <PORT> for opening the socket [default: 52425]")
 
     if len(sys.argv) == 1:
@@ -57,8 +57,8 @@ def main() -> None:
     if args.host:
         HOST = args.host
 
-    if args.n:
-        NUM_PROCESSES = args.n
+    if args.np:
+        NUM_PROCESSES = args.np
 
     if args.port:
         PORT = args.port

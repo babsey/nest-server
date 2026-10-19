@@ -110,7 +110,7 @@ def test_start_truncates_logfile(monkeypatch, run):
     "args",
     [
         ["-n", "4", "-h", "0.0.0.0", "-p", "8000"],
-        ["-np", "4", "--host", "0.0.0.0", "--port", "8000"],
+        ["--np", "4", "--host", "0.0.0.0", "--port", "8000"],
     ],
 )
 def test_start_with_options(monkeypatch, run, args):
