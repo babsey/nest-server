@@ -59,6 +59,7 @@ def test_combine_lists_of_unequal_length_raise():
 
 def test_combine_dicts_are_merged():
     assert combine([{"a": 1}, {"b": 2}]) == {"a": 1, "b": 2}
+    assert combine([{"a": 1}, {"a": 1, "b": 2}]) == {"a": 1, "b": 2}
 
 
 def test_combine_dicts_ignore_empty():
