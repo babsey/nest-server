@@ -129,7 +129,7 @@ def do_exec(args: list, kwargs: dict) -> dict:
 
     if "return" in kwargs:
         if isinstance(kwargs["return"], (list, tuple)):
-            data = {(variable, globals_.get(variable, None)) for variable in kwargs["return"]}
+            data = {variable: globals_.get(variable, None) for variable in kwargs["return"]}
         else:
             data = globals_.get(kwargs["return"], None)
 
