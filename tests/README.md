@@ -7,31 +7,29 @@ Important: The nest server should be started with these settings:
 - the Python code is not restricted
 - and loaded modules are nest and numpy.
 
-Run pytest
-
-```
-pytest
-```
+#### Run pytest
 
 Run pytest in virtual environment.
 
 ```
-uv run --env-file .env pytest
+uv run --env-file .env.local pytest [-v]
 ```
 
-Run tests with NEST Server MPI is currently not implemented.
-However you can run test of nest-clients for NEST Server MPI.
+#### Run pytest with NEST Server MPI
+
+NOTE: Client tests with NEST Server MPI is currently not implemented.
+However you can run client test of nest-client that send requests to NEST Server MPI.
 
 Start NEST Server MPI
 
 ```
-mpirun -n 2 nest-server-mpi
+nest-server-mpi -n 2 start
 ```
 
-Then run tests of NEST Server MPI in nest-clients (deselect `not_mpi` markers)
+Then run tests of [nest-client](https://github.com/nest/nest-client) (deselect `not_mpi` markers)
 
 ```
-uv run pytest -v -m `not not_mpi`
+uv run pytest -m `not not_mpi`
 ```
 
 ### Debugging tests
@@ -47,8 +45,8 @@ logger = logging.getLogger()
 logger.debug("Hello world")
 ```
 
-Run pytest with debugs.
+Run pytest with debugging.
 
 ```
-uv run --env-file .env pytest --log-level debug
+uv run --env-file .env.local pytest --log-level debug
 ```
