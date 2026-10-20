@@ -40,6 +40,7 @@ classifiers = [
   "Programming Language :: Python :: 3.15",
 ]
 dependencies = [
+  "click>=8.5",
   "flask>=3.1",
   "flask-cors>=6.0",
   "gunicorn>=26.2",
