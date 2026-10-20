@@ -18,25 +18,20 @@ nest-server start
 
 ### Command options
 
-Entering `nest-server` without sub-command prints the documentation:
+Entering `nest-server --help` without command shows the help message such as:
 
 ```
-usage: nest-server [-d] [-h HOST] [-o] [-p PORT] [-t TIMEOUT] [-w WORKERS] {log,pid,start,stop,version}
+Usage: nest-server [OPTIONS] COMMAND [ARGS]...
 
-A Python-based API server for NEST Simulator
+Options:
+  --help  Show this message and exit.
 
-positional arguments:
-  {log,pid,start,stop,version}
-
-options:
-  -d, --daemon          daemonize the server process
-  -h, --host HOST       use hostname/IP address <HOST> for the server [default: 127.0.0.1]
-  -o, --outputs         print NEST outputs to the console
-  -p, --port PORT       use port <PORT> for opening the socket [default: 52425]
-  -t, --timeout TIMEOUT
-                        workers silent for more than this many seconds are killed and restarted [default: 30]
-  -w, --workers WORKERS
-                        the number of worker processes for handling requests [default: 1]
+Commands:
+  log
+  pid
+  start
+  stop
+  version
 ```
 
 ### Default environment variables
