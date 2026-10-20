@@ -17,11 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with NEST.  If not, see <http://www.gnu.org/licenses/>.
 
-import argparse
 import os
 import subprocess
-import sys
 
+import click
 from gunicorn.app.wsgiapp import WSGIApplication
 
 from nest_server import __version__
@@ -52,89 +51,82 @@ class StandaloneApplication(WSGIApplication):
             self.cfg.set(key.lower(), value)
 
 
-def main() -> None:
-    global DAEMON, HOST, PORT, STDOUT, WORKERS
+@click.group()
+def main():
+    pass
 
-    parser = argparse.ArgumentParser(description="A Python-based API server for the NEST Simulator", add_help=False)
-    parser.add_argument("operation", choices=["log", "pid", "start", "stop", "version"])
 
-    parser.add_argument(
-        "-d",
-        "--daemon",
-        action="store_true",
-        help="run NEST Server in the background, i.e. daemonize the server process",
-    )
-    parser.add_argument(
-        "-h", "--host", type=str, help="use hostname/IP address <HOST> for the server [default: 127.0.0.1]"
-    )
-    parser.add_argument("-o", "--outputs", action="store_true", help="print NEST outputs to the console")
-    parser.add_argument("-p", "--port", type=int, help="use port <PORT> for opening the socket [default: 52425]")
-    parser.add_argument(
-        "-t",
-        "--timeout",
-        type=int,
-        help="workers silent for more than this many seconds are killed and restarted [default: 30]",
-    )
-    parser.add_argument(
-        "-w", "--workers", type=int, help="the number of worker processes for handling requests [default: 1]"
-    )
+@main.command()
+def log():
+    subprocess.run(f"tail -f {LOGFILE}", shell=True, executable="/bin/bash", check=True)
 
-    if len(sys.argv) == 1:
-        parser.print_help()
-        sys.exit(0)
 
-    args = parser.parse_args()
+@main.command()
+def pid():
+    try:
+        subprocess.run(f"pgrep -fo '{cli} start'", shell=True, executable="/bin/bash", check=True)
+    except Exception:  # noqa: BLE001
+        click.echo("No such process")
 
-    if args.daemon:
-        DAEMON = args.daemon
 
-    if args.host:
-        HOST = args.host
+@main.command()
+@click.option(
+    "--daemon",
+    "-d",
+    is_flag=True,
+    default=DAEMON,
+    help="run NEST Server in the background, i.e. daemonize the server process",
+)
+@click.option("--host", "-h", default=HOST, help=f"use hostname/IP address for the server [default: {HOST}]")
+@click.option("--port", "-p", default=PORT, help=f"use port for opening the socket [default: {PORT}]")
+@click.option("--outputs", "-o", is_flag=True, default=STDOUT, help="print NEST outputs to the console")
+@click.option(
+    "--timeout",
+    "-t",
+    default=TIMEOUT,
+    help=f"workers silent for more than this many seconds are killed and restarted [default: {TIMEOUT}]",
+)
+@click.option(
+    "--workers",
+    "-w",
+    default=WORKERS,
+    help=f"the number of worker processes for handling requests [default: {WORKERS}]",
+)
+def start(daemon: bool, host: str, outputs: bool, port: int, timeout: int, workers: int):
+    options = {
+        "bind": f"{host}:{port}",
+        "capture_output": not outputs,
+        "daemon": daemon,
+        "errorlog": LOGFILE,
+        "pidfile": PIDFILE,
+        "timeout": timeout,
+        "workers": workers,
+        # "worker_class": "uvicorn.workers.UvicornWorker",
+    }
 
-    if args.port:
-        PORT = args.port
+    msg = f"NEST Server is now running at http://{host}:{port}."
+    click.echo(msg)
+    click.echo("Use CTRL + C to stop this service.")
+    click.echo(len(msg) * "-")
 
-    if args.outputs:
-        STDOUT = args.outputs
+    StandaloneApplication(app, options).run()
 
-    if args.workers:
-        WORKERS = args.workers
 
-    match args.operation:
-        case "log":
-            subprocess.run(f"tail -f {LOGFILE}", shell=True, executable="/bin/bash", check=True)
+@main.command()
+@click.option("--host", "-h", default=HOST, help=f"use hostname/IP address for the server [default: {HOST}]")
+@click.option("--port", "-p", default=PORT, help=f"use port for opening the socket [default: {PORT}]")
+def stop(host: str, port: int):
+    try:
+        subprocess.run(f"pgrep -fo '{cli} start' | xargs kill", shell=True, executable="/bin/bash", check=True)
+        click.echo(f"NEST Server running at http://{host}:{port} has stopped.")
+    except Exception:  # noqa: BLE001
+        click.echo(f"NEST Server is not running at http://{host}:{port}.")
 
-        case "pid":
-            try:
-                subprocess.run(f"pgrep -fo '{cli} start'", shell=True, executable="/bin/bash", check=True)
-            except Exception:  # noqa: BLE001
-                print("No such process")
 
-        case "start":
-            options = {
-                "bind": f"{HOST}:{PORT}",
-                "capture_output": not STDOUT,
-                "daemon": DAEMON,
-                "errorlog": LOGFILE,
-                "pidfile": PIDFILE,
-                "timeout": TIMEOUT,
-                "workers": WORKERS,
-                # "worker_class": "uvicorn.workers.UvicornWorker",
-            }
+@main.command()
+def version():
+    click.echo(__version__)
 
-            msg = f"NEST Server is now running at http://{HOST}:{PORT}."
-            print(msg)
-            print("Use CTRL + C to stop this service.")
-            print(len(msg) * "-")
 
-            StandaloneApplication(app, options).run()
-
-        case "stop":
-            try:
-                subprocess.run(f"pgrep -fo '{cli} start' | xargs kill", shell=True, executable="/bin/bash", check=True)
-                print(f"NEST Server running at http://{HOST}:{PORT} has stopped.")
-            except Exception:  # noqa: BLE001
-                print(f"NEST Server is not running at http://{HOST}:{PORT}.")
-
-        case "version":
-            print(__version__)
+if __name__ == "__main__":
+    main()

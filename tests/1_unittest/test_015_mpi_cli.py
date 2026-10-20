@@ -1,19 +1,16 @@
 import importlib
 import subprocess
-import sys
 from unittest import mock
 
 import pytest
+from click.testing import CliRunner
 
 from nest_server import __version__
 from nest_server.mpi import cli
 
 
 @pytest.fixture(autouse=True)
-def defaults(monkeypatch, tmp_path):
-    monkeypatch.setattr(cli, "HOST", "127.0.0.1")
-    monkeypatch.setattr(cli, "PORT", 52425)
-    monkeypatch.setattr(cli, "NUM_PROCESSES", 1)
+def logfile(monkeypatch, tmp_path):
     monkeypatch.setattr(cli, "LOGFILE", str(tmp_path / "nest-server-mpi.log"))
 
 
@@ -24,9 +21,8 @@ def run(monkeypatch):
     return mocked
 
 
-def call_main(monkeypatch, *args):
-    monkeypatch.setattr(sys, "argv", ["nest-server-mpi", *args])
-    cli.main()
+def invoke(*args):
+    return CliRunner().invoke(cli.main, args, prog_name="nest-server-mpi")
 
 
 def test_filepath_points_to_runner():
@@ -50,58 +46,70 @@ def test_env_defaults(monkeypatch):
         importlib.reload(cli)
 
 
-def test_no_arguments_prints_help(monkeypatch, capsys, run):
-    with pytest.raises(SystemExit) as exc:
-        call_main(monkeypatch)
-    assert exc.value.code == 0
-    assert "A MPI server for the NEST Simulator" in capsys.readouterr().out
+def test_no_arguments_prints_help(run):
+    result = invoke()
+    assert result.exit_code == 2
+    assert "Usage: nest-server-mpi" in result.output
+    for command in ["log", "pid", "start", "stop", "version"]:
+        assert command in result.output
     run.assert_not_called()
 
 
-def test_invalid_operation(monkeypatch, run):
-    with pytest.raises(SystemExit) as exc:
-        call_main(monkeypatch, "restart")
-    assert exc.value.code == 2
+def test_invalid_operation(run):
+    result = invoke("restart")
+    assert result.exit_code == 2
+    assert "No such command 'restart'" in result.output
     run.assert_not_called()
 
 
-def test_version(monkeypatch, capsys, run):
-    call_main(monkeypatch, "version")
-    assert capsys.readouterr().out.strip() == __version__
+def test_version(run):
+    result = invoke("version")
+    assert result.exit_code == 0
+    assert result.output.strip() == __version__
     run.assert_not_called()
 
 
-def test_log(monkeypatch, run):
-    call_main(monkeypatch, "log")
+def test_log(run):
+    result = invoke("log")
+    assert result.exit_code == 0
     run.assert_called_once_with(f"tail -f {cli.LOGFILE}", shell=True, executable="/bin/bash", check=True)
 
 
-def test_pid(monkeypatch, run):
-    call_main(monkeypatch, "pid")
-    cmd = run.call_args.args[0]
-    assert cmd == f"pgrep -fo '{cli.filepath} --host 127.0.0.1 --port 52425'"
+def test_pid(run):
+    result = invoke("pid")
+    assert result.exit_code == 0
+    assert run.call_args.args[0] == f"pgrep -fo '{cli.filepath} --host {cli.HOST} --port {cli.PORT}'"
 
 
-def test_pid_no_process(monkeypatch, capsys, run):
+def test_pid_with_options(run):
+    result = invoke("pid", "-h", "0.0.0.0", "-p", "8000")
+    assert result.exit_code == 0
+    assert run.call_args.args[0] == f"pgrep -fo '{cli.filepath} --host 0.0.0.0 --port 8000'"
+
+
+def test_pid_no_process(run):
     run.side_effect = subprocess.CalledProcessError(1, "pgrep")
-    call_main(monkeypatch, "pid")
-    assert capsys.readouterr().out.strip() == "No such process"
+    result = invoke("pid")
+    assert result.exit_code == 0
+    assert result.output.strip() == "No such process"
 
 
-def test_start(monkeypatch, run):
-    call_main(monkeypatch, "start")
+def test_start(run):
+    result = invoke("start")
+    assert result.exit_code == 0
     cmd = run.call_args.args[0]
-    assert cmd == f"mpirun -n 1 {cli.filepath} --host 127.0.0.1 --port 52425"
+    assert cmd == f"mpirun -n {cli.NUM_PROCESSES} {cli.filepath} --host {cli.HOST} --port {cli.PORT}"
     kwargs = run.call_args.kwargs
     assert kwargs["shell"] is True
     assert kwargs["check"] is True
     assert kwargs["stdout"].name == cli.LOGFILE
+    assert f"NEST Server is now running at http://{cli.HOST}:{cli.PORT}." in result.output
 
 
-def test_start_truncates_logfile(monkeypatch, run):
+def test_start_truncates_logfile(run):
     with open(cli.LOGFILE, "w") as f:
         f.write("old content")
-    call_main(monkeypatch, "start")
+    invoke("start")
     with open(cli.LOGFILE) as f:
         assert f.read() == ""
 
@@ -113,30 +121,29 @@ def test_start_truncates_logfile(monkeypatch, run):
         ["--np", "4", "--host", "0.0.0.0", "--port", "8000"],
     ],
 )
-def test_start_with_options(monkeypatch, run, args):
-    call_main(monkeypatch, "start", *args)
-    cmd = run.call_args.args[0]
-    assert cmd == f"mpirun -n 4 {cli.filepath} --host 0.0.0.0 --port 8000"
-    assert cli.HOST == "0.0.0.0"
-    assert cli.PORT == 8000
-    assert cli.NUM_PROCESSES == 4
+def test_start_with_options(run, args):
+    result = invoke("start", *args)
+    assert result.exit_code == 0
+    assert run.call_args.args[0] == f"mpirun -n 4 {cli.filepath} --host 0.0.0.0 --port 8000"
 
 
-def test_start_with_invalid_port(monkeypatch, run):
-    with pytest.raises(SystemExit) as exc:
-        call_main(monkeypatch, "start", "--port", "abc")
-    assert exc.value.code == 2
+@pytest.mark.parametrize("option", ["--np", "--port"])
+def test_start_invalid_integer(run, option):
+    result = invoke("start", option, "abc")
+    assert result.exit_code == 2
+    assert "is not a valid integer" in result.output
     run.assert_not_called()
 
 
-def test_stop(monkeypatch, capsys, run):
-    call_main(monkeypatch, "stop", "--port", "8000")
-    cmd = run.call_args.args[0]
-    assert cmd == f"pgrep -fo '{cli.filepath} --host 127.0.0.1 --port 8000' | xargs kill"
-    assert "NEST Server MPI running at http://127.0.0.1:8000 has stopped." in capsys.readouterr().out
+def test_stop(run):
+    result = invoke("stop", "--port", "8000")
+    assert result.exit_code == 0
+    assert run.call_args.args[0] == f"pgrep -fo '{cli.filepath} --host {cli.HOST} --port 8000' | xargs kill"
+    assert f"NEST Server MPI running at http://{cli.HOST}:8000 has stopped." in result.output
 
 
-def test_stop_not_running(monkeypatch, capsys, run):
+def test_stop_not_running(run):
     run.side_effect = subprocess.CalledProcessError(1, "pgrep")
-    call_main(monkeypatch, "stop")
-    assert "NEST Server MPI is not running at http://127.0.0.1:52425." in capsys.readouterr().out
+    result = invoke("stop")
+    assert result.exit_code == 0
+    assert f"NEST Server MPI is not running at http://{cli.HOST}:{cli.PORT}." in result.output

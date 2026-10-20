@@ -1,8 +1,8 @@
 import subprocess
-import sys
 from unittest import mock
 
 import pytest
+from click.testing import CliRunner
 
 from nest_server import __version__, cli
 
@@ -21,109 +21,128 @@ def standalone_app(monkeypatch):
     return mocked
 
 
-@pytest.fixture(autouse=True)
-def restore_globals(monkeypatch):
-    # main() rebinds module globals; pin defaults and let monkeypatch restore them afterwards.
-    monkeypatch.setattr(cli, "DAEMON", False)
-    monkeypatch.setattr(cli, "HOST", "127.0.0.1")
-    monkeypatch.setattr(cli, "PORT", 52425)
-    monkeypatch.setattr(cli, "STDOUT", False)
-    monkeypatch.setattr(cli, "TIMEOUT", 30)
-    monkeypatch.setattr(cli, "WORKERS", 1)
+def invoke(*args):
+    return CliRunner().invoke(cli.main, args, prog_name="nest-server")
 
 
-def call_main(monkeypatch, *args):
-    monkeypatch.setattr(sys, "argv", ["nest-server", *args])
-    cli.main()
+def test_no_arguments_prints_help(run):
+    result = invoke()
+    assert result.exit_code == 2
+    assert "Usage: nest-server" in result.output
+    for command in ["log", "pid", "start", "stop", "version"]:
+        assert command in result.output
+    run.assert_not_called()
 
 
-def test_no_arguments_prints_help(monkeypatch, capsys):
-    with pytest.raises(SystemExit) as exc_info:
-        call_main(monkeypatch)
-    assert exc_info.value.code == 0
-    assert "usage:" in capsys.readouterr().out
+def test_help():
+    result = invoke("--help")
+    assert result.exit_code == 0
+    assert "Usage: nest-server" in result.output
 
 
-def test_invalid_operation(monkeypatch):
-    with pytest.raises(SystemExit) as exc_info:
-        call_main(monkeypatch, "restart")
-    assert exc_info.value.code == 2
+def test_invalid_operation(run):
+    result = invoke("restart")
+    assert result.exit_code == 2
+    assert "No such command 'restart'" in result.output
+    run.assert_not_called()
 
 
-def test_version(monkeypatch, capsys):
-    call_main(monkeypatch, "version")
-    assert capsys.readouterr().out.strip() == __version__
+def test_version(run):
+    result = invoke("version")
+    assert result.exit_code == 0
+    assert result.output.strip() == __version__
+    run.assert_not_called()
 
 
-def test_log(monkeypatch, run):
-    call_main(monkeypatch, "log")
-    assert run.call_args.args[0] == f"tail -f {cli.LOGFILE}"
+def test_log(run):
+    result = invoke("log")
+    assert result.exit_code == 0
+    run.assert_called_once_with(f"tail -f {cli.LOGFILE}", shell=True, executable="/bin/bash", check=True)
 
 
-def test_pid(monkeypatch, run):
-    call_main(monkeypatch, "pid")
+def test_pid(run):
+    result = invoke("pid")
+    assert result.exit_code == 0
     assert run.call_args.args[0] == "pgrep -fo 'nest-server start'"
 
 
-def test_pid_no_process(monkeypatch, run, capsys):
+def test_pid_no_process(run):
     run.side_effect = subprocess.CalledProcessError(1, "pgrep")
-    call_main(monkeypatch, "pid")
-    assert capsys.readouterr().out.strip() == "No such process"
+    result = invoke("pid")
+    assert result.exit_code == 0
+    assert result.output.strip() == "No such process"
 
 
-def test_stop(monkeypatch, run, capsys):
-    call_main(monkeypatch, "stop")
+def test_stop(run):
+    result = invoke("stop")
+    assert result.exit_code == 0
     assert run.call_args.args[0] == "pgrep -fo 'nest-server start' | xargs kill"
-    assert "has stopped" in capsys.readouterr().out
+    assert f"NEST Server running at http://{cli.HOST}:{cli.PORT} has stopped." in result.output
 
 
-def test_stop_not_running(monkeypatch, run, capsys):
+@pytest.mark.parametrize("args", [["-h", "0.0.0.0", "-p", "8000"], ["--host", "0.0.0.0", "--port", "8000"]])
+def test_stop_with_options(run, args):
+    result = invoke("stop", *args)
+    assert result.exit_code == 0
+    assert "NEST Server running at http://0.0.0.0:8000 has stopped." in result.output
+
+
+def test_stop_not_running(run):
     run.side_effect = subprocess.CalledProcessError(1, "pgrep")
-    call_main(monkeypatch, "stop", "-p", "8000")
-    assert capsys.readouterr().out.strip() == "NEST Server is not running at http://127.0.0.1:8000."
+    result = invoke("stop", "-p", "8000")
+    assert result.exit_code == 0
+    assert result.output.strip() == f"NEST Server is not running at http://{cli.HOST}:8000."
 
 
-def test_start_defaults(monkeypatch, standalone_app, capsys):
-    call_main(monkeypatch, "start")
+def test_start_defaults(standalone_app):
+    result = invoke("start")
+    assert result.exit_code == 0
 
     app_uri, options = standalone_app.call_args.args
     assert app_uri == "nest_server.main:create_app()"
     assert options == {
-        "bind": "127.0.0.1:52425",
-        "capture_output": True,
-        "daemon": False,
+        "bind": f"{cli.HOST}:{cli.PORT}",
+        "capture_output": not cli.STDOUT,
+        "daemon": cli.DAEMON,
         "errorlog": cli.LOGFILE,
         "pidfile": cli.PIDFILE,
-        "timeout": 30,
-        "workers": 1,
+        "timeout": cli.TIMEOUT,
+        "workers": cli.WORKERS,
     }
     standalone_app.return_value.run.assert_called_once_with()
-    assert "NEST Server is now running at http://127.0.0.1:52425." in capsys.readouterr().out
+
+    msg = f"NEST Server is now running at http://{cli.HOST}:{cli.PORT}."
+    assert msg in result.output
+    assert "Use CTRL + C to stop this service." in result.output
+    assert len(msg) * "-" in result.output
 
 
-def test_start_with_options(monkeypatch, standalone_app):
-    call_main(monkeypatch, "start", "-d", "-h", "0.0.0.0", "-p", "9000", "-o", "-w", "4")
+@pytest.mark.parametrize(
+    "args",
+    [
+        ["-d", "-h", "0.0.0.0", "-p", "9000", "-o", "-t", "60", "-w", "4"],
+        ["--daemon", "--host", "0.0.0.0", "--port", "9000", "--outputs", "--timeout", "60", "--workers", "4"],
+    ],
+)
+def test_start_with_options(standalone_app, args):
+    result = invoke("start", *args)
+    assert result.exit_code == 0
 
     options = standalone_app.call_args.args[1]
     assert options["bind"] == "0.0.0.0:9000"
     assert options["daemon"] is True
     assert options["capture_output"] is False
+    assert options["timeout"] == 60
     assert options["workers"] == 4
+    assert "NEST Server is now running at http://0.0.0.0:9000." in result.output
 
 
-def test_start_long_options(monkeypatch, standalone_app):
-    call_main(monkeypatch, "start", "--daemon", "--host", "10.0.0.1", "--port", "1234", "--outputs", "--workers", "2")
-
-    options = standalone_app.call_args.args[1]
-    assert options["bind"] == "10.0.0.1:1234"
-    assert options["daemon"] is True
-    assert options["capture_output"] is False
-    assert options["workers"] == 2
-
-
-def test_invalid_port(monkeypatch):
-    with pytest.raises(SystemExit):
-        call_main(monkeypatch, "start", "-p", "abc")
+@pytest.mark.parametrize("option", ["--port", "--timeout", "--workers"])
+def test_start_invalid_integer(standalone_app, option):
+    result = invoke("start", option, "abc")
+    assert result.exit_code == 2
+    assert "is not a valid integer" in result.output
+    standalone_app.assert_not_called()
 
 
 class TestStandaloneApplication:
