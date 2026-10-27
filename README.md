@@ -19,7 +19,7 @@ Server was integrated into the main source code repository of NEST to make it av
 
 ## Use cases for NEST Server
 
-<img src="./nest_server.png" alt="Usecase" width="250">
+<img src="./nest_server.png" width="250">
 
 NEST Server can be considered a language independent interface to NEST that can be deployed either locally or on a
 remote machine. To give you a better idea of what NEST Server is good for, here are some of its main use cases.
