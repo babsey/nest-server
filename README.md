@@ -342,7 +342,7 @@ showing the basic idea:
 <tr>
 <td>
 
-```HTML
+```html
 <!DOCTYPE html>
 <html>
 <head>
@@ -366,7 +366,7 @@ showing the basic idea:
 </td>
 <td>
 
-```JavaScript
+```javascript
 function getAPI(call, callback=console.log) {
     const xhr = new XMLHttpRequest();
     xhr.addEventListener("readystatechange", () => {
