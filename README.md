@@ -18,20 +18,23 @@ nest-server start
 
 ### Command options
 
-Entering `nest-server --help` without command shows the help message such as:
+Entering `nest-server start --help` shows the help message such as:
 
 ```
-Usage: nest-server [OPTIONS] COMMAND [ARGS]...
+Usage: nest-server start [OPTIONS]
 
 Options:
-  --help  Show this message and exit.
-
-Commands:
-  log
-  pid
-  start
-  stop
-  version
+-d, --daemon           run NEST Server in the background, i.e. daemonize the
+                        server process
+-h, --host TEXT        use hostname/IP address for the server [default:
+                        127.0.0.1]
+-p, --port INTEGER     use port for opening the socket [default: 52425]
+-o, --outputs          print NEST outputs to the console
+-t, --timeout INTEGER  workers silent for more than this many seconds are
+                        killed and restarted [default: 30]
+-w, --workers INTEGER  the number of worker processes for handling requests
+                        [default: 1]
+--help                 Show this message and exit.
 ```
 
 ### Default environment variables
