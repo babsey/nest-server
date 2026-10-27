@@ -477,6 +477,22 @@ nest-server-api Simulate '{"t": 1000}'
 nest-server-api GetStatus '{"nodes": [4], "keys": "n_events"}'
 ```
 
+## Development mode
+
+We recommend to use virtual environment, e.g. with ```uv```:
+
+Install ```nest-client``` as an editable package
+
+```bash
+uv pip install -e .
+```
+
+### Test against multiple Python versions using ```uv```
+
+```bash
+make test-all
+```
+
 ## References
 
 - [NEST Desktop](https://nest-desktop.readthedocs.io)
