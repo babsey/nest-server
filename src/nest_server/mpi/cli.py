@@ -44,8 +44,8 @@ def log():
 
 
 @main.command()
-@click.option("--host", "-h", default=HOST, help=f"use hostname/IP address for the server [default: {HOST}]")
-@click.option("--port", "-p", default=PORT, help=f"use port for opening the socket [default: {PORT}]")
+@click.option("--host", "-h", default=HOST, help=f"Use hostname/IP address for the server [default: {HOST}]")
+@click.option("--port", "-p", default=PORT, help=f"Use port for opening the socket [default: {PORT}]")
 def pid(host: str, port: int):
     try:
         subprocess.run(
@@ -59,9 +59,9 @@ def pid(host: str, port: int):
 
 
 @main.command()
-@click.option("--host", "-h", default=HOST, help=f"use hostname/IP address for the server [default: {HOST}]")
-@click.option("--np", "-n", default=NUM_PROCESSES, help=f"number of processes to run [default: {NUM_PROCESSES}]")
-@click.option("--port", "-p", default=PORT, help=f"use port for opening the socket [default: {PORT}]")
+@click.option("--host", "-h", default=HOST, help=f"Use hostname/IP address for the server [default: {HOST}]")
+@click.option("--np", "-n", default=NUM_PROCESSES, help=f"Number of processes to run [default: {NUM_PROCESSES}]")
+@click.option("--port", "-p", default=PORT, help=f"Use port for opening the socket [default: {PORT}]")
 def start(host: str, np: int, port: int):
     msg = f"NEST Server is now running at http://{host}:{port}."
     click.echo(msg)
@@ -79,8 +79,8 @@ def start(host: str, np: int, port: int):
 
 
 @main.command()
-@click.option("--host", "-h", default=HOST, help=f"use hostname/IP address for the server [default: {HOST}]")
-@click.option("--port", "-p", default=PORT, help=f"use port for opening the socket [default: {PORT}]")
+@click.option("--host", "-h", default=HOST, help=f"Use hostname/IP address for the server [default: {HOST}]")
+@click.option("--port", "-p", default=PORT, help=f"Use port for opening the socket [default: {PORT}]")
 def stop(host: str, port: int):
     try:
         subprocess.run(

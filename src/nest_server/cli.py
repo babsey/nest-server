@@ -75,22 +75,22 @@ def pid():
     "-d",
     is_flag=True,
     default=DAEMON,
-    help="run NEST Server in the background, i.e. daemonize the server process",
+    help="Run NEST Server in the background, i.e. daemonize the server process",
 )
-@click.option("--host", "-h", default=HOST, help=f"use hostname/IP address for the server [default: {HOST}]")
-@click.option("--port", "-p", default=PORT, help=f"use port for opening the socket [default: {PORT}]")
-@click.option("--outputs", "-o", is_flag=True, default=STDOUT, help="print NEST outputs to the console")
+@click.option("--host", "-h", default=HOST, help=f"Use hostname/IP address for the server [default: {HOST}]")
+@click.option("--port", "-p", default=PORT, help=f"Use port for opening the socket [default: {PORT}]")
+@click.option("--outputs", "-o", is_flag=True, default=STDOUT, help="Print NEST outputs to the console")
 @click.option(
     "--timeout",
     "-t",
     default=TIMEOUT,
-    help=f"workers silent for more than this many seconds are killed and restarted [default: {TIMEOUT}]",
+    help=f"Workers silent for more than this many seconds are killed and restarted [default: {TIMEOUT}]",
 )
 @click.option(
     "--workers",
     "-w",
     default=WORKERS,
-    help=f"the number of worker processes for handling requests [default: {WORKERS}]",
+    help=f"The number of worker processes for handling requests [default: {WORKERS}]",
 )
 def start(daemon: bool, host: str, outputs: bool, port: int, timeout: int, workers: int):
     options = {
@@ -113,8 +113,8 @@ def start(daemon: bool, host: str, outputs: bool, port: int, timeout: int, worke
 
 
 @main.command()
-@click.option("--host", "-h", default=HOST, help=f"use hostname/IP address for the server [default: {HOST}]")
-@click.option("--port", "-p", default=PORT, help=f"use port for opening the socket [default: {PORT}]")
+@click.option("--host", "-h", default=HOST, help=f"Use hostname/IP address for the server [default: {HOST}]")
+@click.option("--port", "-p", default=PORT, help=f"Use port for opening the socket [default: {PORT}]")
 def stop(host: str, port: int):
     try:
         subprocess.run(f"pgrep -fo '{cli} start' | xargs kill", shell=True, executable="/bin/bash", check=True)
