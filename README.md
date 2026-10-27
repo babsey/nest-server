@@ -114,8 +114,9 @@ consideration, each of the restrictions can be disabled by setting a correspondi
   them in the form http://host_or_ip:\* to this variable (By default: http://localhost:\*).
 * ```NEST_SERVER_ENABLE_EXEC_CALL```: By default, NEST Server only allows calls to its PyNEST-like API. If the use-case
   requires the execution of scripts via the ```/exec``` route, this variable can be set to ```true```.
-  > [!NOTE]
-  > PLEASE BE AWARE THAT THIS OPENS YOUR COMPUTER TO REMOTE CODE EXECUTION.
+> [!NOTE]
+>
+> PLEASE BE AWARE THAT THIS OPENS YOUR COMPUTER TO REMOTE CODE EXECUTION.
 * ```NEST_SERVER_DISABLE_RESTRICTION```: By default, NEST Server runs all code passed to the ```/exec``` route through
   RestrictedPython to sanitize it. To disable this mechanism, this variable can be set to ```true```.
 * ```NEST_SERVER_MODULES```: For increased security, code passed in this way only allows explictly whitelisted modules
