@@ -19,7 +19,7 @@ Server was integrated into the main source code repository of NEST to make it av
 
 ## Use cases for NEST Server
 
-[Usecase](./nest_server.png)
+![Usecase](./nest_server.png)
 
 NEST Server can be considered a language independent interface to NEST that can be deployed either locally or on a
 remote machine. To give you a better idea of what NEST Server is good for, here are some of its main use cases.
@@ -144,27 +144,14 @@ replaced by generic values.
 
 ## REST API overview
 
-```localhost:52425```
-    Get the version of NEST used by NEST Server
-
-```localhost:52425/api```
-    List all available functions
-
-```localhost:52425/api/<call>```
-    Execute the function ```<call>```
-
-```localhost:52425/api/<call>?inspect=getdoc```
-    Get the documentation for the function ```<call>```
-
-```localhost:52425/api/<call>?inspect=getsource```
-    Get the source code of the function ```<call>```
-
-```localhost:52425/exec```
-    Execute a Python script. This requires JSON data in the form
-
-```json
-{"source": "<script>", "return": ""}
-```
+| URL | Description |
+| --- | ----------- |
+| ```localhost:52425``` | Get the version of NEST used by NEST Server, e.g. ```{"mpi":false,"nest":"3.10.0"}``` |
+| ```localhost:52425/api``` | List all available functions |
+| ```localhost:52425/api/<call>``` | Execute the function ```<call>``` |
+| ```localhost:52425/api/<call>?inspect=getdoc```| Get the documentation for the function ```<call>``` |
+| ```localhost:52425/api/<call>?inspect=getsource``` | Get the source code of the function ```<call>``` |
+| ```localhost:52425/exec``` | Execute a Python script. This requires JSON data in the JSON form ```{"source": "<script>", "return": ""}``` |
 
 ## Low-level API usage
 
@@ -292,7 +279,7 @@ print(response["data"])  # [0, 2, 4, 6, 8]
 > Each modification to the default security settings of NEST Server should be carefully evaluated on a case-by-case
 > basis.
 >
-> We are aware that some simulation code might not work (well) in a RestrictedPython environment. To support such
+> We are aware that some simulation code might not work (well) in a ```RestrictedPython``` environment. To support such
 > codes, the security features of NEST Server can be completely disabled by starting it in the following way:
 >
 > ```
