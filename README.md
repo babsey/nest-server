@@ -84,7 +84,7 @@ docker run -it --rm -e NEST_CONTAINER_MODE="nest-server" -p 52425:52425 nest/nes
 
 The generic invocation command line for the ```nest-server start --help``` command looks as follows:
 
-```bash
+```
 Usage: nest-server start [OPTIONS]
 
 Options:
@@ -267,10 +267,9 @@ nest-server start
 After this, NumPy can be used from within scripts in the regular way:
 
 ```python
-from nest_client import NESTClient
-
-nest = NESTClient()
-response = nest.exec_script("a = np.arange(0, 10, 2)", "a")
+response = requests.post(
+    "http://localhost:52425/exec", json={"source": "a = np.arange(0, 10, 2)", "return": "a"}
+).json()
 print(response["data"])  # [0, 2, 4, 6, 8]
 ```
 
@@ -366,7 +365,7 @@ showing the basic idea:
 </td>
 <td>
 
-```javascript
+```js
 function getAPI(call, callback=console.log) {
     const xhr = new XMLHttpRequest();
     xhr.addEventListener("readystatechange", () => {
@@ -492,3 +491,4 @@ nest-server-api GetStatus '{"nodes": [4], "keys": "n_events"}'
 
 - [NEST Desktop](https://nest-desktop.readthedocs.io)
 - [NEST Simulator](http://nest-simulator.readthedocs.io)
+- [NEST Client](https://github.org/nest/nest-client)
