@@ -335,13 +335,6 @@ website. In this context, JavaScript is the natural choice for the client-side l
 web browsers and provides libraries for handling HTTP requests and responses out of the box. Here is a small example
 showing the basic idea:
 
-<table>
-<tr>
-<td> HTML </td> <td> JavaScript </td>
-</tr>
-<tr>
-<td>
-
 ```html
 <!DOCTYPE html>
 <html>
@@ -363,8 +356,7 @@ showing the basic idea:
 </html>
 ```
 
-</td>
-<td>
+or defining a function `getAPI`:
 
 ```js
 function getAPI(call, callback=console.log) {
@@ -379,9 +371,6 @@ function getAPI(call, callback=console.log) {
     xhr.send(null);
 }
 ```
-
-</td>
-</table>
 
 Using the above code, we can already send API-requests to NEST Server:
 
