@@ -1,5 +1,8 @@
 FROM ubuntu:26.04
 LABEL maintainer="Sebastian Spreizer <spreizer@web.de>"
+ENV VERSION=3.0.0b9
+
+ENV HOME=/root
 
 # The installer requires curl (and certificates) to download the release archive
 RUN apt-get update && \
@@ -14,9 +17,9 @@ ADD https://astral.sh/uv/install.sh /uv-installer.sh
 RUN sh /uv-installer.sh && rm /uv-installer.sh
 
 # Ensure the installed binary is on the `PATH`
-ENV PATH="/root/.local/bin/:$PATH"
+ENV PATH="$HOME/.local/bin/:$PATH"
 
-ENV UV_PYTHON_CACHE_DIR=/root/.cache/uv/python
+ENV UV_PYTHON_CACHE_DIR=$HOME/.cache/uv/python
 
 RUN uv venv /opt/venv
 # Use the virtual environment automatically
@@ -25,12 +28,12 @@ ENV VIRTUAL_ENV=/opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 RUN --mount=type=cache,target=/root/.cache/uv \
-  uv pip install nest-server==3.0.0b8
+  uv pip install nest-server==$VERSION
 
 # NOTE: These lines can be removed for NEST Simulator 3.11 or up.
 # Otherwise it will use build-in nest-server command from NEST Simulator.
 RUN rm /opt/venv/bin/nest-server*
-RUN uv pip install --reinstall --no-deps nest-server==3.0.0b8
+RUN uv pip install --reinstall --no-deps nest-server==$VERSION
 
 # Health check: curl the endpoint every 30 seconds
 # -f flag fails silently on HTTP errors (4xx, 5xx)

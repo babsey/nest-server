@@ -1,5 +1,6 @@
 FROM ubuntu:26.04
 LABEL maintainer="Sebastian Spreizer <spreizer@web.de>"
+ENV HOME=/root
 
 # The installer requires curl (and certificates) to download the release archive
 RUN apt-get update && \
@@ -14,13 +15,13 @@ ADD https://astral.sh/uv/install.sh /uv-installer.sh
 RUN sh /uv-installer.sh && rm /uv-installer.sh
 
 # Ensure the installed binary is on the `PATH`
-ENV PATH="/root/.local/bin/:$PATH"
+ENV PATH="$HOME/.local/bin/:$PATH"
 
 COPY . ./app
 
 WORKDIR /app
 
-ENV UV_PYTHON_CACHE_DIR=/root/.cache/uv/python
+ENV UV_PYTHON_CACHE_DIR=$HOME/.cache/uv/python
 
 RUN --mount=type=cache,target=/root/.cache/uv \
   uv sync
