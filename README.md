@@ -27,7 +27,7 @@ remote machine. To give you a better idea of what NEST Server is good for, here 
 One scenario in which NEST Server comes in handy, is if you want to work on your laptop, but run your NEST simulations
 on a machine with higher performance or more memory, for instance, a big workstation or computer cluster at your lab.
 For this, you would deploy NEST Server on the remote machine, and use the
-[NEST Client](https://github.org/nest/nest-client) locally or write your own client using one of the recipes provided in
+[NEST Client](https://github.com/nest/nest-client) locally or write your own client using one of the recipes provided in
 the [section on advanced applications](#advanced-topics).
 
 [NEST Desktop](https://nest-desktop.readthedocs.io), the web-based graphical user interface for NEST, uses NEST Server
@@ -497,4 +497,4 @@ make test-all
 
 - [NEST Desktop](https://nest-desktop.readthedocs.io)
 - [NEST Simulator](http://nest-simulator.readthedocs.io)
-- [NEST Client](https://github.org/nest/nest-client)
+- [NEST Client](https://github.com/nest/nest-client)
