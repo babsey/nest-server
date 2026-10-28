@@ -1,8 +1,9 @@
+# check=skip=SecretsUsedInArgOrEnv
+
 FROM ubuntu:26.04
 LABEL maintainer="Sebastian Spreizer <spreizer@web.de>"
-ENV VERSION=3.0.0b9
-
 ENV HOME=/root
+ENV VERSION=3.0.0b9
 
 # The installer requires curl (and certificates) to download the release archive
 RUN apt-get update && \
@@ -42,9 +43,9 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:52425 || exit 1
 
 ENV NEST_SERVER_HOST="0.0.0.0"
-ENV NEST_SERVER_DISABLE_AUTH=1
-ENV NEST_SERVER_DISABLE_RESTRICTION=1
-ENV NEST_SERVER_ENABLE_EXEC_CALL=1
+ENV NEST_SERVER_DISABLE_AUTH="true"
+ENV NEST_SERVER_DISABLE_RESTRICTION="true"
+ENV NEST_SERVER_ENABLE_EXEC_CALL="true"
 ENV NEST_SERVER_MODULES="import nest; import numpy; import numpy as np"
 
 EXPOSE 52425
