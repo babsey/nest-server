@@ -3,7 +3,7 @@ name = "nest-server"
 version = "3.0.0b9"
 description = "A Python-based API server for the NEST Simulator"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license-files = ["LICENSE"]
 authors = [
   {name = "Sebastian Spreizer"},
@@ -32,7 +32,6 @@ classifiers = [
 
   # Specify the Python versions you support here.
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
