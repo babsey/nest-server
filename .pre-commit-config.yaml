@@ -23,3 +23,6 @@ repos:
     rev: v0.0.86
     hooks:
       - id: ty
+
+ci:
+  skip: [ty]
