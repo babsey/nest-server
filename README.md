@@ -14,8 +14,7 @@ Server forwards the commands it receives to PyNEST, and sends back the result da
 
 NEST Server was initially developed as a backend for [NEST Desktop](https://nest-desktop.readthedocs.io), a web-based
 graphical frontend for NEST. With growing interest in a more general server backend for NEST, the functionality of the
-original NEST Server was extended to accommodate for this broader range of application. Starting with NEST 3.0, the NEST
-Server was integrated into the main source code repository of NEST to make it available to everyone in a convenient way.
+original NEST Server was extended to accommodate for this broader range of application.
 
 ## Use cases for NEST Server
 
