@@ -1,9 +1,9 @@
 [project]
 name = "nest-server"
-version = "3.0.0b5"
+version = "3.0.0rc1"
 description = "A Python-based API server for the NEST Simulator"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license-files = ["LICENSE"]
 authors = [
   {name = "Sebastian Spreizer"},
@@ -32,13 +32,14 @@ classifiers = [
 
   # Specify the Python versions you support here.
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3.14",
+  "Programming Language :: Python :: 3.15",
 ]
 dependencies = [
+  "click>=8.5",
   "flask>=3.1",
   "flask-cors>=6.0",
   "gunicorn>=26.2",
@@ -63,16 +64,19 @@ mpi = [
 
 [dependency-groups]
 dev = [
-  "coverage>=7.16",
-  "pre-commit>=4.6",
+  "coverage>=7.17",
+  "pre-commit>=4.7",
   "pytest>=9.1",
-  "ruff>=0.16",
+  "ruff>=0.17",
   "ty>=0.0",
 ]
 
 [build-system]
-requires = ["uv_build>=0.12.7,<0.13.0"]
+requires = ["uv_build>=0.13.6,<0.14.0"]
 build-backend = "uv_build"
+
+[tool.uv]
+exclude-newer = "3 days" # It should be at least 3 days (default cooldown in dependabot).
 
 [tool.coverage.run]
 omit = [

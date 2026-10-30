@@ -66,7 +66,7 @@ def combine(data: list | None) -> dict | list | None:
     """
     logger.debug(f"combine - {data}")
 
-    # If data is None
+    # Returns None if data is None
     if data is None:
         return None
 
@@ -78,14 +78,16 @@ def combine(data: list | None) -> dict | list | None:
     if len(data) == 0 or all(v is None for v in data):
         return None
 
-    if len(data) == 1 or data[0] == data[1]:
+    # Return the first item if only a item is provided
+    # or all items are the same
+    if len(data) == 1 or all(v == data[0] for v in data):
         return data[0]
 
-    # if all data are known to be the same
+    # If all data are known to be the same
     if all(isinstance(v, (list, tuple)) for v in data):
         return [v_j for v_i in list(zip(*data, strict=True)) for v_j in v_i if v_j is not None]
 
-    # return a single merged dictionary if there are many of them
+    # Return a single merged dictionary if there are many of them
     if all(isinstance(v, dict) for v in data):
         return merge_dicts(data)
 

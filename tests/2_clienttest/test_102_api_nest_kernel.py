@@ -1,5 +1,20 @@
+def test_api_biological_time(client):
+    response = client.get("/api/biological_time")
+    assert response.status_code == 200
+    assert isinstance(response.json, float)
+    assert response.json == 0.0
+
+
 def test_api_reset_kernel(client):
     assert client.get("/api/ResetKernel").status_code == 200
+
+
+def test_api_reset_kernel_doc(client):
+    assert client.get("/api/ResetKernel", data={"inspect": "getdoc"}).status_code == 200
+
+
+def test_api_reset_kernel_source(client):
+    assert client.get("/api/ResetKernel", data={"inspect": "getsource"}).status_code == 200
 
 
 def test_api_get_kernel_status(client):

@@ -24,15 +24,15 @@ import time
 
 import RestrictedPython
 
-from nest_server.helpers import get_boolean_environ
+from nest_server.helpers import str2bool
 
 _default_origins = "http://localhost:*,http://127.0.0.1:*"
-ACCESS_TOKEN = os.environ.get("NEST_SERVER_ACCESS_TOKEN", "")
-AUTH_DISABLED = get_boolean_environ("NEST_SERVER_DISABLE_AUTH")
-CORS_ORIGINS = os.environ.get("NEST_SERVER_CORS_ORIGINS", _default_origins).split(",")
-EXEC_CALL_ENABLED = get_boolean_environ("NEST_SERVER_ENABLE_EXEC_CALL")
-MODULES = os.environ.get("NEST_SERVER_MODULES", "import nest")
-RESTRICTION_DISABLED = get_boolean_environ("NEST_SERVER_DISABLE_RESTRICTION")
+ACCESS_TOKEN = os.getenv("NEST_SERVER_ACCESS_TOKEN", "")
+AUTH_DISABLED = str2bool(os.getenv("NEST_SERVER_DISABLE_AUTH"))
+CORS_ORIGINS = os.getenv("NEST_SERVER_CORS_ORIGINS", _default_origins).split(",")
+EXEC_CALL_ENABLED = str2bool(os.getenv("NEST_SERVER_ENABLE_EXEC_CALL"))
+MODULES = os.getenv("NEST_SERVER_MODULES", "import nest")
+RESTRICTION_DISABLED = str2bool(os.getenv("NEST_SERVER_DISABLE_RESTRICTION"))
 
 
 def _check_security() -> None:
