@@ -3,7 +3,7 @@
 FROM ubuntu:26.04
 LABEL maintainer="Sebastian Spreizer <spreizer@web.de>"
 ENV HOME=/root
-ENV VERSION=3.0.0b9
+ENV VERSION=3.0.0rc1
 
 # The installer requires curl (and certificates) to download the release archive
 RUN apt-get update && \
