@@ -1,0 +1,44 @@
+# To get started with Dependabot version updates, you'll need to specify which
+# package ecosystems to update and where the package manifests are located.
+# Please see the documentation for all configuration options:
+# https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+updates:
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    # Location of `.github/workflows` in the `root` directory
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+    # Dependabot treats each subpath of an action repo as a separate dependency, so ungrouped it bumps e.g.
+    # codeql-action/init without codeql-action/analyze.
+    # Grouping ensures all actions are upgraded together, in a single PR.
+    groups:
+      actions-deps:
+        patterns: ["*"]
+
+  # Pre-commit hooks
+  - package-ecosystem: "pre-commit"
+    # Lock for `.pre-commit-config.yaml` in the `root` directory
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+
+  # Python dependencies
+  - package-ecosystem: "pip"
+    # Look for "pyproject.toml" in the `root` directory
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+
+  # UV dependencies
+  - package-ecosystem: "uv"
+    # Look for "uv.lock" in the `root` directory
+    directory: "/"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 3
