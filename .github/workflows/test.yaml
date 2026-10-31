@@ -1,4 +1,4 @@
-name: Tests
+name: Test
 
 on:
   push:
@@ -27,13 +27,13 @@ jobs:
       - name: Install the project
         run: uv sync
 
-      - name: Run coverage with pytest
+      - name: Run test with coverage
         run: |
           uv run --env-file .env.local coverage run --source=./src/nest_server -m pytest
           uv run coverage report
           uv run coverage report --format=markdown >> $GITHUB_STEP_SUMMARY
 
-  unittests:
+  unit:
     runs-on: ubuntu-latest
     needs: coverage
     strategy:
@@ -62,7 +62,7 @@ jobs:
       - name: Run pytest
         run: uv run --env-file .env.local pytest ./tests/unit
 
-  functional-tests:
+  functional:
     runs-on: ubuntu-latest
     needs: coverage
     env:
