@@ -4,6 +4,12 @@
 # https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
 
 version: 2
+
+multi-ecosystem-groups:
+  python-deps:
+    schedule:
+      interval: weekly
+
 updates:
   # GitHub Actions
   - package-ecosystem: "github-actions"
@@ -11,12 +17,9 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 3
-    # Dependabot treats each subpath of an action repo as a separate dependency, so ungrouped it bumps e.g.
-    # codeql-action/init without codeql-action/analyze.
-    # Grouping ensures all actions are upgraded together, in a single PR.
+    open-pull-requests-limit: 1
     groups:
-      actions-deps:
+      actions:
         patterns: ["*"]
 
   # Pre-commit hooks
@@ -25,9 +28,9 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 3
+    open-pull-requests-limit: 1
     groups:
-      actions-deps:
+      pre-commit-hooks:
         patterns: ["*"]
 
   # Python dependencies
@@ -36,18 +39,12 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 3
-    groups:
-      actions-deps:
-        patterns: ["*"]
+    multi-ecosystem-group: python-deps
 
   # UV dependencies
   - package-ecosystem: "uv"
     # Look for "uv.lock" in the `root` directory
     directory: "/"
     schedule:
-      interval: "daily"
-    open-pull-requests-limit: 3
-    groups:
-      actions-deps:
-        patterns: ["*"]
+      interval: "weekly"
+    multi-ecosystem-group: python-deps
