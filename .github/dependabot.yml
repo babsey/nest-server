@@ -4,6 +4,13 @@
 # https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
 
 version: 2
+
+multi-ecosystem-groups:
+  python:
+    schedule:
+      interval: weekly
+  open-pull-requests-limit: 3
+
 updates:
   # GitHub Actions
   - package-ecosystem: "github-actions"
@@ -12,12 +19,20 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 3
-    # Dependabot treats each subpath of an action repo as a separate dependency, so ungrouped it bumps e.g.
-    # codeql-action/init without codeql-action/analyze.
-    # Grouping ensures all actions are upgraded together, in a single PR.
     groups:
-      actions-deps:
-        patterns: ["*"]
+      # Low risk - merge without much review
+      minor-and-patch-actions:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+      # # Higher risk - review more carefully
+      # major-actions:
+      #   patterns:
+      #     - "*"
+      #   update-types:
+      #     - "major"
 
   # Pre-commit hooks
   - package-ecosystem: "pre-commit"
@@ -27,27 +42,40 @@ updates:
       interval: "weekly"
     open-pull-requests-limit: 3
     groups:
-      actions-deps:
-        patterns: ["*"]
+      # Low risk - merge without much review
+      minor-and-patch-pre-commit-hooks:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
 
   # Python dependencies
   - package-ecosystem: "pip"
+    multi-ecosystem-group: python
     # Look for "pyproject.toml" in the `root` directory
     directory: "/"
-    schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 3
+    patterns: ["*"]
     groups:
-      actions-deps:
-        patterns: ["*"]
+      # Low risk - merge without much review
+      minor-and-patch-pre-commit-hooks:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
 
   # UV dependencies
   - package-ecosystem: "uv"
+    multi-ecosystem-group: python
     # Look for "uv.lock" in the `root` directory
     directory: "/"
-    schedule:
-      interval: "daily"
-    open-pull-requests-limit: 3
+    patterns: ["*"]
     groups:
-      actions-deps:
-        patterns: ["*"]
+      # Low risk - merge without much review
+      minor-and-patch-pre-commit-hooks:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
