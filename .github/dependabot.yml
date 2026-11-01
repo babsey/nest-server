@@ -55,7 +55,6 @@ updates:
     # Look for "pyproject.toml" in the `root` directory
     directory: "/"
     patterns: ["*"]
-    open-pull-requests-limit: 3
 
   # UV lock
   - package-ecosystem: "uv"
@@ -63,4 +62,3 @@ updates:
     # Look for "uv.lock" in the `root` directory
     directory: "/"
     patterns: ["*"]
-    open-pull-requests-limit: 3
