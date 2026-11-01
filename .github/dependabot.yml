@@ -6,9 +6,10 @@
 version: 2
 
 multi-ecosystem-groups:
-  python-deps:
+  python:
     schedule:
       interval: weekly
+  open-pull-requests-limit: 3
 
 updates:
   # GitHub Actions
@@ -17,10 +18,21 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 1
+    open-pull-requests-limit: 3
     groups:
-      actions:
-        patterns: ["*"]
+      # Low risk - merge without much review
+      minor-and-patch-actions:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+      # # Higher risk - review more carefully
+      # major-actions:
+      #   patterns:
+      #     - "*"
+      #   update-types:
+      #     - "major"
 
   # Pre-commit hooks
   - package-ecosystem: "pre-commit"
@@ -28,23 +40,42 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 1
+    open-pull-requests-limit: 3
     groups:
-      pre-commit-hooks:
-        patterns: ["*"]
+      # Low risk - merge without much review
+      minor-and-patch-pre-commit-hooks:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
 
   # Python dependencies
   - package-ecosystem: "pip"
+    multi-ecosystem-group: python
     # Look for "pyproject.toml" in the `root` directory
     directory: "/"
-    schedule:
-      interval: "weekly"
-    multi-ecosystem-group: python-deps
+    patterns: ["*"]
+    groups:
+      # Low risk - merge without much review
+      minor-and-patch-pre-commit-hooks:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
 
   # UV dependencies
   - package-ecosystem: "uv"
+    multi-ecosystem-group: python
     # Look for "uv.lock" in the `root` directory
     directory: "/"
-    schedule:
-      interval: "weekly"
-    multi-ecosystem-group: python-deps
+    patterns: ["*"]
+    groups:
+      # Low risk - merge without much review
+      minor-and-patch-pre-commit-hooks:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
