@@ -13,7 +13,7 @@ test:
 	uv run --env-file .env.local pytest -v
 
 coverage:
-	uv run --env-file .env.local coverage run --source=./src/nest_server -m pytest
+	uv run --env-file .env.local coverage run --source=./src/nest_server -m pytest ./tests/unit
 	uv run coverage report
 
 lint:
